@@ -1,9 +1,0 @@
-.gitignore
-README.md
-infra/docker-compose.yml
-infra/.env
-infra/.env.example
-backend/internal/domain/flag.go
-backend/internal/domain/errors.go
-backend/migrations/000001_init_schema.up.sql
-backend/migrations/000001_init_schema.down.sql
