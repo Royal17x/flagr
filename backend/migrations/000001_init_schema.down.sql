@@ -1,0 +1,7 @@
+DROP TABLE IF EXISTS audit_entries;
+DROP TABLE IF EXISTS rules;
+DROP TABLE IF EXISTS flag_environments;
+DROP TABLE IF EXISTS flags;
+DROP TABLE IF EXISTS environments;
+DROP TABLE IF EXISTS projects;
+DROP TABLE IF EXISTS organizations;
