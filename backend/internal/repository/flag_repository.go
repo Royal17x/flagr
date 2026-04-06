@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"github.com/Royal17x/flagr/backend/internal/domain"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -61,10 +62,10 @@ func (f *flagRepository) GetByKey(ctx context.Context, projectID uuid.UUID, key 
 }
 
 func (f *flagRepository) List(ctx context.Context, projectID uuid.UUID) ([]*domain.Flag, error) {
+	var flags []*domain.Flag
 	query := `SELECT id, project_id, key, name, description, type, created_at, updated_at
 		FROM flags
 		WHERE project_id = $1;`
-	var flags []*domain.Flag
 	err := f.db.SelectContext(ctx, &flags, query, projectID)
 	if err != nil {
 		return nil, fmt.Errorf("flagRepository.List: %w", err)
