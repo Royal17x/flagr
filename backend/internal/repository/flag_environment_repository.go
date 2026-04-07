@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-
 	"github.com/Royal17x/flagr/backend/internal/domain"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -24,8 +23,7 @@ func (f *flagEnvironmentRepository) Create(ctx context.Context, fe *domain.FlagE
 	query := `
 		INSERT INTO flag_environments (id, flag_id, environment_id, enabled, rollout_percentage, updated_at)
 		VALUES ($1, $2, $3, $4, $5, NOW())
-		RETURNING updated_at
-	`
+		RETURNING updated_at`
 	row := f.db.QueryRowContext(ctx, query, fe.ID, fe.FlagID, fe.EnvironmentID, fe.Enabled, fe.RolloutPercentage)
 	if err := row.Scan(&fe.UpdatedAt); err != nil {
 		return uuid.Nil, fmt.Errorf("flagEnvironmentRepository.Create: %w", err)
@@ -44,6 +42,22 @@ func (f *flagEnvironmentRepository) GetByFlagEnvID(ctx context.Context, flagID u
 		return nil, fmt.Errorf("flagEnvironmentRepository.GetByFlagEnvID: %w", err)
 	}
 	return &fe, nil
+}
+
+func (f *flagEnvironmentRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	query := `DELETE FROM flag_environments WHERE id = $1`
+	res, err := f.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("flagEnvironmentRepository.Delete: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("flagEnvironmentRepository.Delete: %w", err)
+	}
+	if rows == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
 }
 
 func (f *flagEnvironmentRepository) List(ctx context.Context, flagID uuid.UUID) ([]*domain.FlagEnvironment, error) {
@@ -68,22 +82,6 @@ func (f *flagEnvironmentRepository) Upsert(ctx context.Context, fe *domain.FlagE
 	row := f.db.QueryRowContext(ctx, query, uuid.New(), fe.FlagID, fe.EnvironmentID, fe.Enabled, fe.RolloutPercentage)
 	if err := row.Scan(&fe.UpdatedAt); err != nil {
 		return fmt.Errorf("flagEnvironmentRepository.Upsert: %w", err)
-	}
-	return nil
-}
-
-func (r *flagEnvironmentRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	query := `DELETE FROM flag_environments WHERE id = $1`
-	res, err := r.db.ExecContext(ctx, query, id)
-	if err != nil {
-		return fmt.Errorf("flagEnvironmentRepository.Delete: %w", err)
-	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("flagEnvironmentRepository.Delete: %w", err)
-	}
-	if rows == 0 {
-		return domain.ErrNotFound
 	}
 	return nil
 }
