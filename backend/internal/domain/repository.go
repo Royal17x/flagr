@@ -21,11 +21,11 @@ type EnvironmentRepository interface {
 	Update(ctx context.Context, env *Environment) error
 }
 type FlagEnvironmentRepository interface {
-	Create(ctx context.Context, env *FlagEnvironment) (uuid.UUID, error)
+	Create(ctx context.Context, fe *FlagEnvironment) (uuid.UUID, error)
 	GetByFlagEnvID(ctx context.Context, flagID uuid.UUID, envID uuid.UUID) (*FlagEnvironment, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, flagID uuid.UUID) ([]*FlagEnvironment, error)
-	Upsert(ctx context.Context, flagEnvironment *FlagEnvironment) error
+	Upsert(ctx context.Context, fe *FlagEnvironment) error
 }
 
 type FlagRepository interface {
