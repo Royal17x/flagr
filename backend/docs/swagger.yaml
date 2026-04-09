@@ -1,0 +1,268 @@
+basePath: /api/v1
+definitions:
+  handler.createFlagRequest:
+    properties:
+      description:
+        example: New checkout flow
+        type: string
+      key:
+        example: checkout-v2
+        type: string
+      name:
+        example: Checkout V2
+        type: string
+      project_id:
+        example: 77c00606-0099-4642-83e4-0d03c6f78c36
+        type: string
+      type:
+        example: boolean
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    name: Royal17x
+    url: https://github.com/Royal17x/flagr
+  description: Feature flags as a service — open-source alternative to LaunchDarkly
+  title: Flagr API
+  version: "1.0"
+paths:
+  /flags:
+    get:
+      description: Show a current list of flags in project
+      parameters:
+      - description: Project UUID
+        in: query
+        name: project_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a list of flags
+      tags:
+      - flags
+    post:
+      consumes:
+      - application/json
+      description: Creates a new feature flag in a project
+      parameters:
+      - description: Flag data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createFlagRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a feature flag
+      tags:
+      - flags
+  /flags/{id}:
+    delete:
+      description: Deletes flag with ID in param
+      parameters:
+      - description: Flag UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete flag
+      tags:
+      - flags
+    get:
+      description: Returns a single feature flag
+      parameters:
+      - description: Flag UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get flag by ID
+      tags:
+      - flags
+    put:
+      consumes:
+      - application/json
+      description: Changes past flag fields on new fields
+      parameters:
+      - description: Flag UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update flag
+      tags:
+      - flags
+  /flags/evaluate:
+    get:
+      description: Returns a state with current flag ID
+      parameters:
+      - description: Flag key
+        in: query
+        name: key
+        required: true
+        type: string
+      - description: Project UUID
+        in: query
+        name: project_id
+        required: true
+        type: string
+      - description: Environment UUID
+        in: query
+        name: environment_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get "enabled" of flag
+      tags:
+      - flags
+schemes:
+- http
+- https
+swagger: "2.0"

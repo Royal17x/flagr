@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"net/http"
+
+	_ "github.com/Royal17x/flagr/backend/docs"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"net/http"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func NewRouter(flagHandler *FlagHandler) http.Handler {
@@ -12,6 +15,10 @@ func NewRouter(flagHandler *FlagHandler) http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.RequestID)
+
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+	))
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/flags", func(r chi.Router) {
