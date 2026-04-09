@@ -3,13 +3,14 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
 	"time"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
 )
 
 func New(dsn string) (*sqlx.DB, error) {
-	pool, err := sqlx.Open("postgres", dsn)
+	pool, err := sqlx.Open("pgx", dsn)
 	if err != nil {
 		return nil, err
 	}

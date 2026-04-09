@@ -3,13 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/Royal17x/flagr/backend/internal/handler"
-	"github.com/Royal17x/flagr/backend/internal/repository"
-	"github.com/Royal17x/flagr/backend/internal/service"
-	pg "github.com/Royal17x/flagr/backend/pkg/postgres"
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"log"
 	"log/slog"
 	"net/http"
@@ -17,13 +10,32 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/Royal17x/flagr/backend/internal/handler"
+	"github.com/Royal17x/flagr/backend/internal/repository"
+	"github.com/Royal17x/flagr/backend/internal/service"
+	pg "github.com/Royal17x/flagr/backend/pkg/postgres"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
+// @title           Flagr API
+// @version         1.0
+// @description     Feature flags as a service — open-source alternative to LaunchDarkly
+
+// @contact.name    Royal17x
+// @contact.url     https://github.com/Royal17x/flagr
+
+// @host            localhost:8080
+// @BasePath        /api/v1
+
+// @schemes         http https
 func main() {
 	// postgres
 	dsn := os.Getenv("POSTGRES_DSN")
 	if dsn == "" {
-		dsn = "postgres://flagr:flagr@localhost:5432/flagr?sslmode=disable"
+		dsn = "postgres://flagr:flagr@localhost:5433/flagr?sslmode=disable"
 	}
 	db, err := pg.New(dsn)
 	if err != nil {
