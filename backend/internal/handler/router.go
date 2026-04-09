@@ -4,17 +4,21 @@ import (
 	"net/http"
 
 	_ "github.com/Royal17x/flagr/backend/docs"
+	"github.com/Royal17x/flagr/backend/internal/middleware"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func NewRouter(flagHandler *FlagHandler) http.Handler {
 	r := chi.NewRouter()
 
+	rl := middleware.NewRateLimiter(60, 120)
+
+	r.Use(chiMiddleware.Recoverer)
+	r.Use(chiMiddleware.RequestID)
+	r.Use(rl.Middleware)
 	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.RequestID)
 
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
