@@ -16,7 +16,7 @@ type ipLimiter struct {
 
 type RateLimiter struct {
 	limiters map[string]*ipLimiter
-	mu       sync.Mutex
+	mu       sync.RWMutex
 	r        rate.Limit
 	b        int
 }
@@ -33,10 +33,15 @@ func NewRateLimiter(r rate.Limit, b int) *RateLimiter {
 }
 
 func (rl *RateLimiter) getLimiter(ip string) *rate.Limiter {
+	rl.mu.RLock()
+	if l, ok := rl.limiters[ip]; ok {
+		rl.mu.RUnlock()
+		return l.limiter
+	}
+	rl.mu.RUnlock()
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
 	if l, ok := rl.limiters[ip]; ok {
-		rl.limiters[ip].lastSeen = time.Now()
 		return l.limiter
 	}
 	rl.limiters[ip] = &ipLimiter{limiter: rate.NewLimiter(rl.r, rl.b), lastSeen: time.Now()}

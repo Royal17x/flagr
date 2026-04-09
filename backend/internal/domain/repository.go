@@ -36,3 +36,15 @@ type FlagRepository interface {
 	Update(ctx context.Context, flag *Flag) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
+
+type UserRepository interface {
+	Create(ctx context.Context, user *User) (uuid.UUID, error)
+	GetByEmail(ctx context.Context, email string) (*User, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
+}
+type RefreshTokenRepository interface {
+	Create(ctx context.Context, token *RefreshToken) error
+	GetByTokenHash(ctx context.Context, hash string) (*RefreshToken, error)
+	DeleteByTokenHash(ctx context.Context, hash string) error
+	DeleteAllByUserID(ctx context.Context, userID uuid.UUID) error
+}
