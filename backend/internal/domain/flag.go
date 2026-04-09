@@ -5,38 +5,6 @@ import (
 	"time"
 )
 
-type Organization struct {
-	ID        uuid.UUID `json:"id" db:"id"`
-	Name      string    `json:"name" db:"name"`
-	Slug      string    `json:"slug" db:"slug"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
-}
-
-type Project struct {
-	ID             uuid.UUID `json:"id" db:"id"`
-	OrganizationID uuid.UUID `json:"organization_id" db:"organization_id"`
-	Name           string    `json:"name" db:"name"`
-	Description    string    `json:"description" db:"description"`
-	CreatedAt      time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
-}
-
-type Environment struct {
-	ID        uuid.UUID `json:"id" db:"id"`
-	ProjectID uuid.UUID `json:"project_id" db:"project_id"`
-	Name      string    `json:"name" db:"name"`
-	Slug      string    `json:"slug" db:"slug"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-}
-
-type FlagType string
-
-const (
-	FlagTypeBoolean      FlagType = "boolean"
-	FlagTypeMultivariate FlagType = "multivariate"
-)
-
 type Flag struct {
 	ID          uuid.UUID `json:"id" db:"id"`
 	ProjectID   uuid.UUID `json:"project_id" db:"project_id"`
@@ -47,6 +15,13 @@ type Flag struct {
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
+
+type FlagType string
+
+const (
+	FlagTypeBoolean      FlagType = "boolean"
+	FlagTypeMultivariate FlagType = "multivariate"
+)
 
 type FlagEnvironment struct {
 	ID                uuid.UUID `json:"id" db:"id"`
@@ -66,13 +41,4 @@ type Rule struct {
 	Value             string    `json:"value" db:"value"`
 	Priority          int       `json:"priority" db:"priority"`
 	CreatedAt         time.Time `json:"created_at" db:"created_at"`
-}
-
-type AuditEntry struct {
-	ID         uuid.UUID `json:"id" db:"id"`
-	Action     string    `json:"action" db:"action"`
-	ActorID    uuid.UUID `json:"actor_id" db:"actor_id"`
-	ResourceID uuid.UUID `json:"resource_id" db:"resource_id"`
-	Payload    string    `json:"payload" db:"payload"`
-	CreatedAt  time.Time `json:"created_at" db:"created_at"`
 }
