@@ -30,6 +30,7 @@ func NewFlagHandler(flagService service.FlagServiceInterface) *FlagHandler {
 // @Failure      404      {object}  map[string]string
 // @Failure      409      {object}  map[string]string
 // @Failure      500      {object}  map[string]string
+// @Security BearerAuth
 // @Router       /flags [post]
 func (h *FlagHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req createFlagRequest
@@ -70,6 +71,7 @@ func (h *FlagHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  map[string]string
 // @Failure      404  {object}  map[string]string
 // @Failure      500  {object}  map[string]string
+// @Security BearerAuth
 // @Router       /flags/{id} [get]
 func (h *FlagHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -95,6 +97,7 @@ func (h *FlagHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Success      200      {object}  map[string]any
 // @Failure      400      {object}  map[string]string
 // @Failure      500      {object}  map[string]string
+// @Security BearerAuth
 // @Router       /flags [get]
 func (h *FlagHandler) List(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("project_id")
@@ -121,11 +124,13 @@ func (h *FlagHandler) List(w http.ResponseWriter, r *http.Request) {
 // @Tags         flags
 // @Accept       json
 // @Produce      json
+// @Param  request  body  updateFlagRequest  true  "Update data"
 // @Param        id   path      string  true  "Flag UUID"
 // @Success      200  {object}  map[string]any
 // @Failure      400  {object}  map[string]string
 // @Failure      404  {object}  map[string]string
 // @Failure      500  {object}  map[string]string
+// @Security BearerAuth
 // @Router       /flags/{id} [put]
 func (h *FlagHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -168,6 +173,7 @@ func (h *FlagHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  map[string]string
 // @Failure      404  {object}  map[string]string
 // @Failure      500  {object}  map[string]string
+// @Security BearerAuth
 // @Router       /flags/{id} [delete]
 func (h *FlagHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -200,6 +206,7 @@ func (h *FlagHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  map[string]string
 // @Failure      404  {object}  map[string]string
 // @Failure      500  {object}  map[string]string
+// @Security BearerAuth
 // @Router  /flags/evaluate [get]
 func (h *FlagHandler) Evaluate(w http.ResponseWriter, r *http.Request) {
 	key := r.URL.Query().Get("key")

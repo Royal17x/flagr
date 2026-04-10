@@ -17,7 +17,7 @@ type FlagServiceInterface interface {
 }
 
 type AuthServiceInterface interface {
-	Register(ctx context.Context, email, password string, orgID uuid.UUID) (uuid.UUID, error)
+	Register(ctx context.Context, email, password string, orgID uuid.UUID) (TokenPair, error)
 	Login(ctx context.Context, email, password string) (TokenPair, error)
 	Refresh(ctx context.Context, refreshToken string) (TokenPair, error)
 	Logout(ctx context.Context, refreshToken string) error

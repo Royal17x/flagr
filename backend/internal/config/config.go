@@ -44,7 +44,7 @@ func Load() *Config {
 	viper.SetDefault("http.write_timeout", 15*time.Second)
 
 	viper.SetDefault("postgres.dsn",
-		"postgres://flagr:flagr@localhost:5433/flagr?sslmode=disable")
+		"postgres://flagr:flagr@localhost:5437/flagr?sslmode=disable")
 
 	viper.SetDefault("redis.addr", "localhost:6380")
 	viper.SetDefault("redis.password", "")

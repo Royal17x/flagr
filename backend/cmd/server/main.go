@@ -33,6 +33,10 @@ import (
 // @BasePath        /api/v1
 
 // @schemes         http https
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	// config
 	config := cfg.Load()
@@ -95,7 +99,7 @@ func main() {
 
 	sigChan := make(chan os.Signal, 1)
 
-	// server start on addr
+	// server start
 	go func() {
 		slog.Info("flagr listening", "addr", "8080")
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {

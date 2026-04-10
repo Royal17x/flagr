@@ -18,6 +18,52 @@ definitions:
         example: boolean
         type: string
     type: object
+  handler.loginRequest:
+    properties:
+      email:
+        example: user@company.com
+        type: string
+      password:
+        example: securepassword
+        type: string
+    type: object
+  handler.logoutRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  handler.refreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  handler.registerRequest:
+    properties:
+      email:
+        example: user@company.com
+        type: string
+      org_id:
+        example: 77c00606-0099-4642-83e4-0d03c6f78c36
+        type: string
+      password:
+        example: securepassword
+        type: string
+    type: object
+  handler.updateFlagRequest:
+    properties:
+      description:
+        example: Updated description
+        type: string
+      key:
+        example: checkout-v2
+        type: string
+      name:
+        example: Checkout V2
+        type: string
+      type:
+        example: boolean
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -27,6 +73,159 @@ info:
   title: Flagr API
   version: "1.0"
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and get token pair
+      parameters:
+      - description: Login data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Invalidate refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.logoutRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Logout
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Get new access token using refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.refreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Refresh access token
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user account
+      parameters:
+      - description: Register data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.registerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register new user
+      tags:
+      - auth
   /flags:
     get:
       description: Show a current list of flags in project
@@ -56,6 +255,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get a list of flags
       tags:
       - flags
@@ -102,6 +303,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Create a feature flag
       tags:
       - flags
@@ -135,6 +338,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Delete flag
       tags:
       - flags
@@ -172,6 +377,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get flag by ID
       tags:
       - flags
@@ -180,6 +387,12 @@ paths:
       - application/json
       description: Changes past flag fields on new fields
       parameters:
+      - description: Update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateFlagRequest'
       - description: Flag UUID
         in: path
         name: id
@@ -211,6 +424,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Update flag
       tags:
       - flags
@@ -259,10 +474,17 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get "enabled" of flag
       tags:
       - flags
 schemes:
 - http
 - https
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
