@@ -19,17 +19,17 @@ func NewUserRepository(db *sqlx.DB) *userRepository {
 }
 
 func (u *userRepository) Create(ctx context.Context, user *domain.User) (uuid.UUID, error) {
-	id := uuid.New()
+	user.ID = uuid.New()
 	query := `
 		INSERT INTO users 
 		    (id, org_id, email, password_hash, created_at, updated_at)
 			VALUES($1, $2, $3, $4, NOW(), NOW())
 			RETURNING created_at, updated_at`
-	row := u.db.QueryRowContext(ctx, query, id, user.OrgID, user.Email, user.PasswordHash)
+	row := u.db.QueryRowContext(ctx, query, user.ID, user.OrgID, user.Email, user.PasswordHash)
 	if err := row.Scan(&user.CreatedAt, &user.UpdatedAt); err != nil {
 		return uuid.Nil, fmt.Errorf("userRepository.Create: %w", err)
 	}
-	return id, nil
+	return user.ID, nil
 }
 
 func (u *userRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {

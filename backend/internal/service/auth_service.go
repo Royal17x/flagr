@@ -39,15 +39,15 @@ func NewAuthService(
 	}
 }
 
-func (a *AuthService) Register(ctx context.Context, email, password string, orgID uuid.UUID) (uuid.UUID, error) {
+func (a *AuthService) Register(ctx context.Context, email, password string, orgID uuid.UUID) (TokenPair, error) {
 	id := uuid.New()
 	_, err := a.users.GetByEmail(ctx, email)
 	if err == nil {
-		return uuid.Nil, domain.ErrAlreadyExists
+		return TokenPair{}, domain.ErrAlreadyExists
 	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("authService.Register: %w", err)
+		return TokenPair{}, fmt.Errorf("authService.Register: %w", err)
 	}
 	newUser := domain.User{
 		ID:           id,
@@ -57,9 +57,9 @@ func (a *AuthService) Register(ctx context.Context, email, password string, orgI
 	}
 	id, err = a.users.Create(ctx, &newUser)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("authService.Register: %w", err)
+		return TokenPair{}, fmt.Errorf("authService.Register: %w", err)
 	}
-	return id, nil
+	return a.Login(ctx, email, password)
 }
 func (a *AuthService) Login(ctx context.Context, email, password string) (TokenPair, error) {
 	gotUser, err := a.users.GetByEmail(ctx, email)
@@ -82,7 +82,7 @@ func (a *AuthService) Login(ctx context.Context, email, password string) (TokenP
 	err = a.tokens.Create(ctx, &domain.RefreshToken{
 		UserID:    gotUser.ID,
 		TokenHash: hash,
-		ExpiresAt: time.Now().Add((a.refreshTTL)),
+		ExpiresAt: time.Now().Add(a.refreshTTL),
 	})
 	if err != nil {
 		return TokenPair{}, fmt.Errorf("authService.Login: %w", err)
@@ -113,15 +113,16 @@ func generateRefreshToken() (string, error) {
 	}
 	return hex.EncodeToString(b), nil
 }
-func (a *AuthService) Refresh(ctx context.Context, hashToken string) (TokenPair, error) {
-	token, err := a.tokens.GetByTokenHash(ctx, hashToken)
+func (a *AuthService) Refresh(ctx context.Context, refreshToken string) (TokenPair, error) {
+	hash := hashToken(refreshToken)
+	gotToken, err := a.tokens.GetByTokenHash(ctx, hash)
 	if err != nil {
 		return TokenPair{}, fmt.Errorf("authService.Refresh: %w", err)
 	}
-	if token.ExpiresAt.Before(time.Now()) {
+	if gotToken.ExpiresAt.Before(time.Now()) {
 		return TokenPair{}, domain.ErrUnauthorized
 	}
-	gotUser, err := a.users.GetByID(ctx, token.UserID)
+	gotUser, err := a.users.GetByID(ctx, gotToken.UserID)
 	if err != nil {
 		return TokenPair{}, domain.ErrNotFound
 	}
@@ -129,13 +130,27 @@ func (a *AuthService) Refresh(ctx context.Context, hashToken string) (TokenPair,
 	if err != nil {
 		return TokenPair{}, fmt.Errorf("authService.Refresh: %w", err)
 	}
-	refreshToken, err := generateRefreshToken()
+	newRefreshToken, err := generateRefreshToken()
 	if err != nil {
 		return TokenPair{}, fmt.Errorf("authService.Refresh: %w", err)
 	}
+
+	if err = a.tokens.DeleteByTokenHash(ctx, hash); err != nil {
+		return TokenPair{}, fmt.Errorf("authService.Refresh: %w", err)
+	}
+
+	newHash := hashToken(newRefreshToken)
+	if err = a.tokens.Create(ctx, &domain.RefreshToken{
+		UserID:    gotToken.UserID,
+		TokenHash: newHash,
+		ExpiresAt: time.Now().Add(a.refreshTTL),
+	}); err != nil {
+		return TokenPair{}, fmt.Errorf("authService.Refresh: %w", err)
+	}
+
 	return TokenPair{
 		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
+		RefreshToken: newRefreshToken,
 	}, nil
 }
 func (a *AuthService) Logout(ctx context.Context, refreshToken string) error {
