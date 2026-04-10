@@ -11,10 +11,10 @@ import (
 )
 
 type FlagHandler struct {
-	flagService *service.FlagService
+	flagService service.FlagServiceInterface
 }
 
-func NewFlagHandler(flagService *service.FlagService) *FlagHandler {
+func NewFlagHandler(flagService service.FlagServiceInterface) *FlagHandler {
 	return &FlagHandler{flagService: flagService}
 }
 
