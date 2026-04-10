@@ -484,6 +484,7 @@ schemes:
 - https
 securityDefinitions:
   BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
     in: header
     name: Authorization
     type: apiKey
