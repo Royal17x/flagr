@@ -61,7 +61,7 @@ func (a *AuthService) Register(ctx context.Context, email, password string, orgI
 	}
 	return id, nil
 }
-func (a *AuthService) Login(ctx context.Context, email, password string, orgID uuid.UUID) (TokenPair, error) {
+func (a *AuthService) Login(ctx context.Context, email, password string) (TokenPair, error) {
 	gotUser, err := a.users.GetByEmail(ctx, email)
 	if err != nil {
 		return TokenPair{}, domain.ErrUnauthorized
