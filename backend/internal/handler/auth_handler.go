@@ -9,10 +9,10 @@ import (
 )
 
 type AuthHandler struct {
-	authService *service.AuthService
+	authService service.AuthServiceInterface
 }
 
-func NewAuthHandler(authService *service.AuthService) *AuthHandler {
+func NewAuthHandler(authService service.AuthServiceInterface) *AuthHandler {
 	return &AuthHandler{authService: authService}
 }
 
@@ -49,7 +49,7 @@ func (a *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		domainErrorToHTTP(w, err)
 		return
 	}
-	respondJSON(w, http.StatusOK, map[string]any{"acess_token": tokenPair.AccessToken, "refresh_token": tokenPair.RefreshToken})
+	respondJSON(w, http.StatusOK, map[string]any{"access_token": tokenPair.AccessToken, "refresh_token": tokenPair.RefreshToken})
 }
 func (a *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	var req refreshRequest

@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"errors"
+	cfg "github.com/Royal17x/flagr/backend/internal/config"
+	"github.com/Royal17x/flagr/backend/internal/middleware"
 	"log"
 	"log/slog"
 	"net/http"
@@ -32,12 +34,11 @@ import (
 
 // @schemes         http https
 func main() {
+	// config
+	config := cfg.Load()
+
 	// postgres
-	dsn := os.Getenv("POSTGRES_DSN")
-	if dsn == "" {
-		dsn = "postgres://flagr:flagr@localhost:5433/flagr?sslmode=disable"
-	}
-	db, err := pg.New(dsn)
+	db, err := pg.New(config.Postgres.DSN)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -59,24 +60,37 @@ func main() {
 	projectRepo := repository.NewProjectRepository(db)
 	envRepo := repository.NewEnvironmentRepository(db)
 	flagEnvRepo := repository.NewFlagEnvironmentRepository(db)
+	userRepo := repository.NewUserRepository(db)
+	tokenRepo := repository.NewTokenRepository(db)
 
 	// services
 	flagSvc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo)
 	_ = service.NewProjectService(projectRepo)
 	_ = service.NewEnvironmentService(envRepo, projectRepo)
+	authSvc := service.NewAuthService(
+		userRepo,
+		tokenRepo,
+		config.Auth.JWTSecret,
+		config.Auth.AccessTokenDuration,
+		config.Auth.RefreshTokenDuration,
+	)
 
 	// handlers
 	flagHandler := handler.NewFlagHandler(flagSvc)
+	authHandler := handler.NewAuthHandler(authSvc)
+
+	//middleware
+	authMiddleware := middleware.NewAuthMiddleware(authSvc)
 
 	// router
-	router := handler.NewRouter(flagHandler)
+	router := handler.NewRouter(flagHandler, authHandler, authMiddleware)
 
 	// http serv
 	srv := &http.Server{
-		Addr:         ":8080",
+		Addr:         ":" + config.HTTP.Port,
 		Handler:      router,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  config.HTTP.ReadTimeout,
+		WriteTimeout: config.HTTP.WriteTimeout,
 	}
 
 	sigChan := make(chan os.Signal, 1)
