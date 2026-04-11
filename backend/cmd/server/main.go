@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	cfg "github.com/Royal17x/flagr/backend/internal/config"
-	"github.com/Royal17x/flagr/backend/internal/middleware"
 	"log"
 	"log/slog"
 	"net/http"
@@ -13,10 +11,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Royal17x/flagr/backend/internal/cache"
+	cfg "github.com/Royal17x/flagr/backend/internal/config"
+	"github.com/Royal17x/flagr/backend/internal/middleware"
+
 	"github.com/Royal17x/flagr/backend/internal/handler"
 	"github.com/Royal17x/flagr/backend/internal/repository"
 	"github.com/Royal17x/flagr/backend/internal/service"
 	pg "github.com/Royal17x/flagr/backend/pkg/postgres"
+	redispkg "github.com/Royal17x/flagr/backend/pkg/redis"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -60,6 +63,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// redis
+	redisClient, err := redispkg.New(config.Redis.Addr, config.Redis.Password)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer redisClient.Close()
+
+	//cache
+	flagCache := cache.NewFlagCache(redisClient)
+
 	// repo's
 	flagRepo := repository.NewFlagRepository(db)
 	projectRepo := repository.NewProjectRepository(db)
@@ -69,7 +82,7 @@ func main() {
 	tokenRepo := repository.NewTokenRepository(db)
 
 	// services
-	flagSvc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo)
+	flagSvc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, flagCache)
 	_ = service.NewProjectService(projectRepo)
 	_ = service.NewEnvironmentService(envRepo, projectRepo)
 	authSvc := service.NewAuthService(
