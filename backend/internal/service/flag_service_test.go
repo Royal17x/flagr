@@ -8,7 +8,8 @@ import (
 	"github.com/Royal17x/flagr/backend/internal/cache"
 	"github.com/Royal17x/flagr/backend/internal/domain"
 	"github.com/Royal17x/flagr/backend/internal/service"
-	"github.com/Royal17x/flagr/backend/mocks"
+	"github.com/Royal17x/flagr/backend/internal/testhelpers"
+	"github.com/Royal17x/flagr/backend/internal/mocks"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -19,7 +20,7 @@ func TestFlagService_CreateFlag_Success(t *testing.T) {
 	flagRepo := new(mocks.MockFlagRepository)
 	projectRepo := new(mocks.MockProjectRepository)
 	flagEnvRepo := new(mocks.MockFlagEnvironmentRepository)
-	nilCache := &cache.NilCache{}
+	nilCache := &testhelpers.NilCache{}
 
 	projectID := uuid.New()
 	expectedID := uuid.New()
@@ -53,7 +54,7 @@ func TestFlagService_CreateFlag_AlreadyExists(t *testing.T) {
 	flagRepo := new(mocks.MockFlagRepository)
 	projectRepo := new(mocks.MockProjectRepository)
 	flagEnvRepo := new(mocks.MockFlagEnvironmentRepository)
-	nilCache := &cache.NilCache{}
+	nilCache := &testhelpers.NilCache{}
 
 	projectID := uuid.New()
 	flag := &domain.Flag{ProjectID: projectID, Key: "existing-flag"}
@@ -81,7 +82,7 @@ func TestFlagService_CreateFlag_ProjectNotFound(t *testing.T) {
 	flagRepo := new(mocks.MockFlagRepository)
 	projectRepo := new(mocks.MockProjectRepository)
 	flagEnvRepo := new(mocks.MockFlagEnvironmentRepository)
-	nilCache := &cache.NilCache{}
+	nilCache := &testhelpers.NilCache{}
 
 	projectID := uuid.New()
 
@@ -128,7 +129,7 @@ func TestFlagService_GetFlag_Success(t *testing.T) {
 	flagRepo := new(mocks.MockFlagRepository)
 	projectRepo := new(mocks.MockProjectRepository)
 	flagEnvRepo := new(mocks.MockFlagEnvironmentRepository)
-	nilCache := &cache.NilCache{}
+	nilCache := &testhelpers.NilCache{}
 
 	id := uuid.New()
 
@@ -151,7 +152,7 @@ func TestFlagService_GetFlag_NotFound(t *testing.T) {
 	flagRepo := new(mocks.MockFlagRepository)
 	projectRepo := new(mocks.MockProjectRepository)
 	flagEnvRepo := new(mocks.MockFlagEnvironmentRepository)
-	nilCache := &cache.NilCache{}
+	nilCache := &testhelpers.NilCache{}
 
 	// Expectations
 	flagRepo.On("GetByID", mock.Anything, mock.Anything).

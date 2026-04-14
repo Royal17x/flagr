@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	service "github.com/Royal17x/flagr/backend/internal/service"
+	port "github.com/Royal17x/flagr/backend/internal/port"
 	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/google/uuid"
@@ -25,22 +25,22 @@ func (_m *MockAuthServiceInterface) EXPECT() *MockAuthServiceInterface_Expecter 
 }
 
 // Login provides a mock function with given fields: ctx, email, password
-func (_m *MockAuthServiceInterface) Login(ctx context.Context, email string, password string) (service.TokenPair, error) {
+func (_m *MockAuthServiceInterface) Login(ctx context.Context, email string, password string) (port.TokenPair, error) {
 	ret := _m.Called(ctx, email, password)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Login")
 	}
 
-	var r0 service.TokenPair
+	var r0 port.TokenPair
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (service.TokenPair, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (port.TokenPair, error)); ok {
 		return rf(ctx, email, password)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) service.TokenPair); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) port.TokenPair); ok {
 		r0 = rf(ctx, email, password)
 	} else {
-		r0 = ret.Get(0).(service.TokenPair)
+		r0 = ret.Get(0).(port.TokenPair)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
@@ -72,12 +72,12 @@ func (_c *MockAuthServiceInterface_Login_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *MockAuthServiceInterface_Login_Call) Return(_a0 service.TokenPair, _a1 error) *MockAuthServiceInterface_Login_Call {
+func (_c *MockAuthServiceInterface_Login_Call) Return(_a0 port.TokenPair, _a1 error) *MockAuthServiceInterface_Login_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockAuthServiceInterface_Login_Call) RunAndReturn(run func(context.Context, string, string) (service.TokenPair, error)) *MockAuthServiceInterface_Login_Call {
+func (_c *MockAuthServiceInterface_Login_Call) RunAndReturn(run func(context.Context, string, string) (port.TokenPair, error)) *MockAuthServiceInterface_Login_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -130,22 +130,22 @@ func (_c *MockAuthServiceInterface_Logout_Call) RunAndReturn(run func(context.Co
 }
 
 // Refresh provides a mock function with given fields: ctx, refreshToken
-func (_m *MockAuthServiceInterface) Refresh(ctx context.Context, refreshToken string) (service.TokenPair, error) {
+func (_m *MockAuthServiceInterface) Refresh(ctx context.Context, refreshToken string) (port.TokenPair, error) {
 	ret := _m.Called(ctx, refreshToken)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Refresh")
 	}
 
-	var r0 service.TokenPair
+	var r0 port.TokenPair
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (service.TokenPair, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (port.TokenPair, error)); ok {
 		return rf(ctx, refreshToken)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) service.TokenPair); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) port.TokenPair); ok {
 		r0 = rf(ctx, refreshToken)
 	} else {
-		r0 = ret.Get(0).(service.TokenPair)
+		r0 = ret.Get(0).(port.TokenPair)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -176,33 +176,33 @@ func (_c *MockAuthServiceInterface_Refresh_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockAuthServiceInterface_Refresh_Call) Return(_a0 service.TokenPair, _a1 error) *MockAuthServiceInterface_Refresh_Call {
+func (_c *MockAuthServiceInterface_Refresh_Call) Return(_a0 port.TokenPair, _a1 error) *MockAuthServiceInterface_Refresh_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockAuthServiceInterface_Refresh_Call) RunAndReturn(run func(context.Context, string) (service.TokenPair, error)) *MockAuthServiceInterface_Refresh_Call {
+func (_c *MockAuthServiceInterface_Refresh_Call) RunAndReturn(run func(context.Context, string) (port.TokenPair, error)) *MockAuthServiceInterface_Refresh_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Register provides a mock function with given fields: ctx, email, password, orgID
-func (_m *MockAuthServiceInterface) Register(ctx context.Context, email string, password string, orgID uuid.UUID) (service.TokenPair, error) {
+func (_m *MockAuthServiceInterface) Register(ctx context.Context, email string, password string, orgID uuid.UUID) (port.TokenPair, error) {
 	ret := _m.Called(ctx, email, password, orgID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Register")
 	}
 
-	var r0 service.TokenPair
+	var r0 port.TokenPair
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, uuid.UUID) (service.TokenPair, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, uuid.UUID) (port.TokenPair, error)); ok {
 		return rf(ctx, email, password, orgID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, uuid.UUID) service.TokenPair); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, uuid.UUID) port.TokenPair); ok {
 		r0 = rf(ctx, email, password, orgID)
 	} else {
-		r0 = ret.Get(0).(service.TokenPair)
+		r0 = ret.Get(0).(port.TokenPair)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string, uuid.UUID) error); ok {
@@ -235,34 +235,34 @@ func (_c *MockAuthServiceInterface_Register_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockAuthServiceInterface_Register_Call) Return(_a0 service.TokenPair, _a1 error) *MockAuthServiceInterface_Register_Call {
+func (_c *MockAuthServiceInterface_Register_Call) Return(_a0 port.TokenPair, _a1 error) *MockAuthServiceInterface_Register_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockAuthServiceInterface_Register_Call) RunAndReturn(run func(context.Context, string, string, uuid.UUID) (service.TokenPair, error)) *MockAuthServiceInterface_Register_Call {
+func (_c *MockAuthServiceInterface_Register_Call) RunAndReturn(run func(context.Context, string, string, uuid.UUID) (port.TokenPair, error)) *MockAuthServiceInterface_Register_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ValidateAccessToken provides a mock function with given fields: tokenStr
-func (_m *MockAuthServiceInterface) ValidateAccessToken(tokenStr string) (*service.Claims, error) {
+func (_m *MockAuthServiceInterface) ValidateAccessToken(tokenStr string) (*port.Claims, error) {
 	ret := _m.Called(tokenStr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ValidateAccessToken")
 	}
 
-	var r0 *service.Claims
+	var r0 *port.Claims
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*service.Claims, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (*port.Claims, error)); ok {
 		return rf(tokenStr)
 	}
-	if rf, ok := ret.Get(0).(func(string) *service.Claims); ok {
+	if rf, ok := ret.Get(0).(func(string) *port.Claims); ok {
 		r0 = rf(tokenStr)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*service.Claims)
+			r0 = ret.Get(0).(*port.Claims)
 		}
 	}
 
@@ -293,12 +293,12 @@ func (_c *MockAuthServiceInterface_ValidateAccessToken_Call) Run(run func(tokenS
 	return _c
 }
 
-func (_c *MockAuthServiceInterface_ValidateAccessToken_Call) Return(_a0 *service.Claims, _a1 error) *MockAuthServiceInterface_ValidateAccessToken_Call {
+func (_c *MockAuthServiceInterface_ValidateAccessToken_Call) Return(_a0 *port.Claims, _a1 error) *MockAuthServiceInterface_ValidateAccessToken_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockAuthServiceInterface_ValidateAccessToken_Call) RunAndReturn(run func(string) (*service.Claims, error)) *MockAuthServiceInterface_ValidateAccessToken_Call {
+func (_c *MockAuthServiceInterface_ValidateAccessToken_Call) RunAndReturn(run func(string) (*port.Claims, error)) *MockAuthServiceInterface_ValidateAccessToken_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/Royal17x/flagr/backend/internal/service"
+	"github.com/Royal17x/flagr/backend/internal/port"
 	"github.com/google/uuid"
 )
 
 type AuthHandler struct {
-	authService service.AuthServiceInterface
+	authService port.AuthServiceInterface
 }
 
-func NewAuthHandler(authService service.AuthServiceInterface) *AuthHandler {
+func NewAuthHandler(authService port.AuthServiceInterface) *AuthHandler {
 	return &AuthHandler{authService: authService}
 }
 
