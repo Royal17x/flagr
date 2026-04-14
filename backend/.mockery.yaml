@@ -1,0 +1,24 @@
+with-expecter: true
+outpkg: mocks
+dir: "mocks"
+resolve-type-alias: false
+disable-version-string: false
+issue-845-fix: true
+packages:
+  github.com/Royal17x/flagr/backend/internal/domain:
+    interfaces:
+      FlagRepository:
+      ProjectRepository:
+      EnvironmentRepository:
+      FlagEnvironmentRepository:
+      UserRepository:
+      RefreshTokenRepository:
+  github.com/Royal17x/flagr/backend/internal/cache:
+    interfaces:
+      FlagCache:
+  github.com/Royal17x/flagr/backend/internal/service:
+    interfaces:
+      FlagServiceInterface:
+      AuthServiceInterface:
+      ProjectServiceInterface:
+      EnvironmentServiceInterface:
