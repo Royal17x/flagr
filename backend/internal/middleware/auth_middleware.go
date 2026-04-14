@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Royal17x/flagr/backend/internal/service"
+	"github.com/Royal17x/flagr/backend/internal/port"
 )
 
 type contextKey string
@@ -16,10 +16,10 @@ const (
 )
 
 type AuthMiddleware struct {
-	authService service.AuthServiceInterface
+	authService port.AuthServiceInterface
 }
 
-func NewAuthMiddleware(authService service.AuthServiceInterface) *AuthMiddleware {
+func NewAuthMiddleware(authService port.AuthServiceInterface) *AuthMiddleware {
 	return &AuthMiddleware{authService: authService}
 }
 

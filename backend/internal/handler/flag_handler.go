@@ -5,16 +5,16 @@ import (
 	"net/http"
 
 	"github.com/Royal17x/flagr/backend/internal/domain"
-	"github.com/Royal17x/flagr/backend/internal/service"
+	"github.com/Royal17x/flagr/backend/internal/port"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
 type FlagHandler struct {
-	flagService service.FlagServiceInterface
+	flagService port.FlagServiceInterface
 }
 
-func NewFlagHandler(flagService service.FlagServiceInterface) *FlagHandler {
+func NewFlagHandler(flagService port.FlagServiceInterface) *FlagHandler {
 	return &FlagHandler{flagService: flagService}
 }
 

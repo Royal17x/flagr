@@ -1,6 +1,6 @@
 with-expecter: true
 outpkg: mocks
-dir: "mocks"
+dir: "internal/mocks"
 resolve-type-alias: false
 disable-version-string: false
 issue-845-fix: true
@@ -16,7 +16,7 @@ packages:
   github.com/Royal17x/flagr/backend/internal/cache:
     interfaces:
       FlagCache:
-  github.com/Royal17x/flagr/backend/internal/service:
+  github.com/Royal17x/flagr/backend/internal/port:
     interfaces:
       FlagServiceInterface:
       AuthServiceInterface:

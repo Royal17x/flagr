@@ -21,7 +21,7 @@ func setupBenchData(b *testing.B) (svcWithCache *service.FlagService, svcWithout
 	projectRepo := repository.NewProjectRepository(db)
 	flagEnvRepo := repository.NewFlagEnvironmentRepository(db)
 	flagCache := cache.NewFlagCache(redisClient)
-	nilCache := &cache.NilCache{}
+	nilCache := &testhelpers.NilCache{}
 
 	ctx := context.Background()
 	orgID := uuid.New()

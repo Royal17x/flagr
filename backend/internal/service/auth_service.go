@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Royal17x/flagr/backend/internal/domain"
+	"github.com/Royal17x/flagr/backend/internal/port"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -39,15 +40,15 @@ func NewAuthService(
 	}
 }
 
-func (a *AuthService) Register(ctx context.Context, email, password string, orgID uuid.UUID) (TokenPair, error) {
+func (a *AuthService) Register(ctx context.Context, email, password string, orgID uuid.UUID) (port.TokenPair, error) {
 	id := uuid.New()
 	_, err := a.users.GetByEmail(ctx, email)
 	if err == nil {
-		return TokenPair{}, domain.ErrAlreadyExists
+		return port.TokenPair{}, domain.ErrAlreadyExists
 	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
-		return TokenPair{}, fmt.Errorf("authService.Register: %w", err)
+		return port.TokenPair{}, fmt.Errorf("authService.Register: %w", err)
 	}
 	newUser := domain.User{
 		ID:           id,
@@ -57,26 +58,26 @@ func (a *AuthService) Register(ctx context.Context, email, password string, orgI
 	}
 	id, err = a.users.Create(ctx, &newUser)
 	if err != nil {
-		return TokenPair{}, fmt.Errorf("authService.Register: %w", err)
+		return port.TokenPair{}, fmt.Errorf("authService.Register: %w", err)
 	}
 	return a.Login(ctx, email, password)
 }
-func (a *AuthService) Login(ctx context.Context, email, password string) (TokenPair, error) {
+func (a *AuthService) Login(ctx context.Context, email, password string) (port.TokenPair, error) {
 	gotUser, err := a.users.GetByEmail(ctx, email)
 	if err != nil {
-		return TokenPair{}, domain.ErrUnauthorized
+		return port.TokenPair{}, domain.ErrUnauthorized
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(gotUser.PasswordHash), []byte(password))
 	if err != nil {
-		return TokenPair{}, domain.ErrUnauthorized
+		return port.TokenPair{}, domain.ErrUnauthorized
 	}
 	accessToken, err := a.generateAccessToken(gotUser)
 	if err != nil {
-		return TokenPair{}, fmt.Errorf("authService.Login: %w", err)
+		return port.TokenPair{}, fmt.Errorf("authService.Login: %w", err)
 	}
 	refreshToken, err := generateRefreshToken()
 	if err != nil {
-		return TokenPair{}, fmt.Errorf("authService.Login: %w", err)
+		return port.TokenPair{}, fmt.Errorf("authService.Login: %w", err)
 	}
 	hash := hashToken(refreshToken)
 	err = a.tokens.Create(ctx, &domain.RefreshToken{
@@ -85,16 +86,16 @@ func (a *AuthService) Login(ctx context.Context, email, password string) (TokenP
 		ExpiresAt: time.Now().Add(a.refreshTTL),
 	})
 	if err != nil {
-		return TokenPair{}, fmt.Errorf("authService.Login: %w", err)
+		return port.TokenPair{}, fmt.Errorf("authService.Login: %w", err)
 	}
-	return TokenPair{
+	return port.TokenPair{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
 }
 
 func (a *AuthService) generateAccessToken(user *domain.User) (string, error) {
-	claims := Claims{
+	claims := port.Claims{
 		UserID: user.ID,
 		OrgID:  user.OrgID,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -113,30 +114,30 @@ func generateRefreshToken() (string, error) {
 	}
 	return hex.EncodeToString(b), nil
 }
-func (a *AuthService) Refresh(ctx context.Context, refreshToken string) (TokenPair, error) {
+func (a *AuthService) Refresh(ctx context.Context, refreshToken string) (port.TokenPair, error) {
 	hash := hashToken(refreshToken)
 	gotToken, err := a.tokens.GetByTokenHash(ctx, hash)
 	if err != nil {
-		return TokenPair{}, fmt.Errorf("authService.Refresh: %w", err)
+		return port.TokenPair{}, fmt.Errorf("authService.Refresh: %w", err)
 	}
 	if gotToken.ExpiresAt.Before(time.Now()) {
-		return TokenPair{}, domain.ErrUnauthorized
+		return port.TokenPair{}, domain.ErrUnauthorized
 	}
 	gotUser, err := a.users.GetByID(ctx, gotToken.UserID)
 	if err != nil {
-		return TokenPair{}, domain.ErrNotFound
+		return port.TokenPair{}, domain.ErrNotFound
 	}
 	accessToken, err := a.generateAccessToken(gotUser)
 	if err != nil {
-		return TokenPair{}, fmt.Errorf("authService.Refresh: %w", err)
+		return port.TokenPair{}, fmt.Errorf("authService.Refresh: %w", err)
 	}
 	newRefreshToken, err := generateRefreshToken()
 	if err != nil {
-		return TokenPair{}, fmt.Errorf("authService.Refresh: %w", err)
+		return port.TokenPair{}, fmt.Errorf("authService.Refresh: %w", err)
 	}
 
 	if err = a.tokens.DeleteByTokenHash(ctx, hash); err != nil {
-		return TokenPair{}, fmt.Errorf("authService.Refresh: %w", err)
+		return port.TokenPair{}, fmt.Errorf("authService.Refresh: %w", err)
 	}
 
 	newHash := hashToken(newRefreshToken)
@@ -145,10 +146,10 @@ func (a *AuthService) Refresh(ctx context.Context, refreshToken string) (TokenPa
 		TokenHash: newHash,
 		ExpiresAt: time.Now().Add(a.refreshTTL),
 	}); err != nil {
-		return TokenPair{}, fmt.Errorf("authService.Refresh: %w", err)
+		return port.TokenPair{}, fmt.Errorf("authService.Refresh: %w", err)
 	}
 
-	return TokenPair{
+	return port.TokenPair{
 		AccessToken:  accessToken,
 		RefreshToken: newRefreshToken,
 	}, nil
@@ -157,8 +158,8 @@ func (a *AuthService) Logout(ctx context.Context, refreshToken string) error {
 	hash := hashToken(refreshToken)
 	return a.tokens.DeleteByTokenHash(ctx, string(hash))
 }
-func (a *AuthService) ValidateAccessToken(tokenStr string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(t *jwt.Token) (any, error) {
+func (a *AuthService) ValidateAccessToken(tokenStr string) (*port.Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &port.Claims{}, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
@@ -167,7 +168,7 @@ func (a *AuthService) ValidateAccessToken(tokenStr string) (*Claims, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid token: %w", err)
 	}
-	claims, ok := token.Claims.(*Claims)
+	claims, ok := token.Claims.(*port.Claims)
 	if !ok || !token.Valid {
 		return nil, errors.New("invalid token claims")
 	}
