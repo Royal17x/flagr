@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Royal17x/flagr/backend/internal/middleware"
 	"log/slog"
 
 	"github.com/Royal17x/flagr/backend/internal/cache"
@@ -16,6 +17,7 @@ type FlagService struct {
 	projects domain.ProjectRepository
 	flagEnvs domain.FlagEnvironmentRepository
 	cache    cache.FlagCache
+	audit    *AuditService
 }
 
 func NewFlagService(
@@ -23,12 +25,14 @@ func NewFlagService(
 	projects domain.ProjectRepository,
 	flagEnvs domain.FlagEnvironmentRepository,
 	cache cache.FlagCache,
+	audit *AuditService,
 ) *FlagService {
 	return &FlagService{
 		flags:    flags,
 		projects: projects,
 		flagEnvs: flagEnvs,
 		cache:    cache,
+		audit:    audit,
 	}
 }
 
@@ -44,7 +48,15 @@ func (f *FlagService) CreateFlag(ctx context.Context, flag *domain.Flag) (uuid.U
 	if !errors.Is(err, domain.ErrNotFound) {
 		return uuid.Nil, fmt.Errorf("FlagService.CreateFlag: %w", err)
 	}
-	return f.flags.Create(ctx, flag)
+	id, err := f.flags.Create(ctx, flag)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("FlagService.CreateFlag: %w", err)
+	}
+
+	actorID, _ := ctx.Value(middleware.UserIDKey).(uuid.UUID)
+	f.audit.RecordFlagCreated(ctx, actorID, id, flag.ProjectID)
+
+	return id, nil
 }
 
 func (f *FlagService) GetFlag(ctx context.Context, id uuid.UUID) (*domain.Flag, error) {
@@ -64,7 +76,7 @@ func (f *FlagService) ListFlags(ctx context.Context, projectID uuid.UUID) ([]*do
 }
 
 func (f *FlagService) UpdateFlag(ctx context.Context, flag *domain.Flag) error {
-	_, err := f.flags.GetByID(ctx, flag.ID)
+	gotFlag, err := f.flags.GetByID(ctx, flag.ID)
 	if err != nil {
 		return fmt.Errorf("FlagService.UpdateFlag: %w", err)
 	}
@@ -73,11 +85,23 @@ func (f *FlagService) UpdateFlag(ctx context.Context, flag *domain.Flag) error {
 	}
 
 	_ = f.cache.InvalidateFlag(ctx, flag.Key, flag.ProjectID)
+
+	actorID, _ := ctx.Value(middleware.UserIDKey).(uuid.UUID)
+	f.audit.RecordFlagUpdated(ctx, actorID, gotFlag.ID, flag.ProjectID, *flag)
 	return nil
 }
 
 func (f *FlagService) DeleteFlag(ctx context.Context, id uuid.UUID) error {
-	return f.flags.Delete(ctx, id)
+	gotFlag, err := f.flags.GetByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("FlagService.DeleteFlag: %w", err)
+	}
+	if err = f.flags.Delete(ctx, id); err != nil {
+		return fmt.Errorf("FlagService.DeleteFlag: %w", err)
+	}
+	actorID, _ := ctx.Value(middleware.UserIDKey).(uuid.UUID)
+	f.audit.RecordFlagDeleted(ctx, actorID, gotFlag.ID, gotFlag.ProjectID)
+	return nil
 }
 
 func (f *FlagService) EvaluateFlag(ctx context.Context, flagKey string, projectID uuid.UUID, environmentID uuid.UUID) (bool, error) {
