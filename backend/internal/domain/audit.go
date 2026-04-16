@@ -5,7 +5,17 @@ import (
 	"time"
 )
 
-type AuditEntry struct {
+type AuditAction string
+
+const (
+	AuditActionFlagCreated  AuditAction = "flag.created"
+	AuditActionFlagUpdated  AuditAction = "flag.updated"
+	AuditActionFlagDeleted  AuditAction = "flag.deleted"
+	AuditActionFlagEnabled  AuditAction = "flag.enabled"
+	AuditActionFlagDisabled AuditAction = "flag.disabled"
+)
+
+type AuditEvent struct {
 	ID         uuid.UUID `json:"id" db:"id"`
 	Action     string    `json:"action" db:"action"`
 	ActorID    uuid.UUID `json:"actor_id" db:"actor_id"`

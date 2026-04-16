@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/Royal17x/flagr/backend/pkg/kafka"
 	"log"
 	"log/slog"
 	"net/http"
@@ -63,7 +64,17 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	application := app.New(config, db, redisClient)
+	if err := kafka.EnsureTopics(context.Background(), config.Kafka.Broker, config.Kafka.ReplicationFactor); err != nil {
+		log.Fatal(err)
+	}
+
+	kafkaProducer := kafka.NewProducer(config.Kafka.Broker)
+	defer kafkaProducer.Close()
+
+	kafkaConsumer := kafka.NewConsumer(config.Kafka.Broker, "flagr-audit-consumer")
+	defer kafkaConsumer.Close()
+
+	application := app.New(config, db, redisClient, kafkaProducer)
 
 	srv := &http.Server{
 		Addr:         ":" + config.HTTP.Port,
@@ -79,6 +90,19 @@ func main() {
 		}
 	}()
 
+	consumerCtx, consumerCancel := context.WithCancel(context.Background())
+	defer consumerCancel()
+
+	go kafkaConsumer.Consume(consumerCtx, func(ctx context.Context, msg kafka.AuditMessage) error {
+		slog.Info("audit even received",
+			"action", msg.Action,
+			"resource_id", msg.ResourceID,
+			"actor_id", msg.ActorID,
+			"occurred_at", msg.OccurredAt,
+		)
+		return nil
+	})
+
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan
@@ -86,4 +110,5 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	srv.Shutdown(ctx)
+
 }

@@ -7,9 +7,9 @@ import (
 
 	"github.com/Royal17x/flagr/backend/internal/cache"
 	"github.com/Royal17x/flagr/backend/internal/domain"
+	"github.com/Royal17x/flagr/backend/internal/mocks"
 	"github.com/Royal17x/flagr/backend/internal/service"
 	"github.com/Royal17x/flagr/backend/internal/testhelpers"
-	"github.com/Royal17x/flagr/backend/internal/mocks"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -21,6 +21,7 @@ func TestFlagService_CreateFlag_Success(t *testing.T) {
 	projectRepo := new(mocks.MockProjectRepository)
 	flagEnvRepo := new(mocks.MockFlagEnvironmentRepository)
 	nilCache := &testhelpers.NilCache{}
+	nilPublisher := &testhelpers.NilAuditPublisher{}
 
 	projectID := uuid.New()
 	expectedID := uuid.New()
@@ -32,8 +33,8 @@ func TestFlagService_CreateFlag_Success(t *testing.T) {
 		Return(nil, domain.ErrNotFound)
 	flagRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Flag")).
 		Return(expectedID, nil)
-
-	svc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, nilCache)
+	auditSvc := service.NewAuditService(nilPublisher)
+	svc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, nilCache, auditSvc)
 
 	// Act
 	id, err := svc.CreateFlag(context.Background(), &domain.Flag{
@@ -55,6 +56,7 @@ func TestFlagService_CreateFlag_AlreadyExists(t *testing.T) {
 	projectRepo := new(mocks.MockProjectRepository)
 	flagEnvRepo := new(mocks.MockFlagEnvironmentRepository)
 	nilCache := &testhelpers.NilCache{}
+	nilPublisher := &testhelpers.NilAuditPublisher{}
 
 	projectID := uuid.New()
 	flag := &domain.Flag{ProjectID: projectID, Key: "existing-flag"}
@@ -66,7 +68,8 @@ func TestFlagService_CreateFlag_AlreadyExists(t *testing.T) {
 		Return(&domain.Flag{}, nil)
 
 	// Act
-	svc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, nilCache)
+	auditSvc := service.NewAuditService(nilPublisher)
+	svc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, nilCache, auditSvc)
 
 	id, err := svc.CreateFlag(context.Background(), flag)
 
@@ -83,6 +86,7 @@ func TestFlagService_CreateFlag_ProjectNotFound(t *testing.T) {
 	projectRepo := new(mocks.MockProjectRepository)
 	flagEnvRepo := new(mocks.MockFlagEnvironmentRepository)
 	nilCache := &testhelpers.NilCache{}
+	nilPublisher := &testhelpers.NilAuditPublisher{}
 
 	projectID := uuid.New()
 
@@ -91,7 +95,8 @@ func TestFlagService_CreateFlag_ProjectNotFound(t *testing.T) {
 		Return(nil, domain.ErrNotFound)
 
 	// Act
-	svc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, nilCache)
+	auditSvc := service.NewAuditService(nilPublisher)
+	svc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, nilCache, auditSvc)
 	id, err := svc.CreateFlag(context.Background(), &domain.Flag{ProjectID: projectID})
 
 	// Assert
@@ -106,6 +111,7 @@ func TestFlagService_EvaluateFlag_CacheHit(t *testing.T) {
 	projectRepo := new(mocks.MockProjectRepository)
 	flagEnvRepo := new(mocks.MockFlagEnvironmentRepository)
 	flagCache := new(mocks.MockFlagCache)
+	nilPublisher := &testhelpers.NilAuditPublisher{}
 
 	projectID := uuid.New()
 	envID := uuid.New()
@@ -115,7 +121,8 @@ func TestFlagService_EvaluateFlag_CacheHit(t *testing.T) {
 		Return(true, nil)
 
 	// Act
-	svc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, flagCache)
+	auditSvc := service.NewAuditService(nilPublisher)
+	svc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, flagCache, auditSvc)
 	enabled, err := svc.EvaluateFlag(context.Background(), "existing-flag", projectID, envID)
 
 	// Assert
@@ -130,6 +137,7 @@ func TestFlagService_GetFlag_Success(t *testing.T) {
 	projectRepo := new(mocks.MockProjectRepository)
 	flagEnvRepo := new(mocks.MockFlagEnvironmentRepository)
 	nilCache := &testhelpers.NilCache{}
+	nilPublisher := &testhelpers.NilAuditPublisher{}
 
 	id := uuid.New()
 
@@ -138,7 +146,8 @@ func TestFlagService_GetFlag_Success(t *testing.T) {
 		Return(&domain.Flag{ID: id, Key: "test"}, nil)
 
 	// Act
-	svc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, nilCache)
+	auditSvc := service.NewAuditService(nilPublisher)
+	svc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, nilCache, auditSvc)
 	got, err := svc.GetFlag(context.Background(), id)
 
 	// Assert
@@ -153,13 +162,15 @@ func TestFlagService_GetFlag_NotFound(t *testing.T) {
 	projectRepo := new(mocks.MockProjectRepository)
 	flagEnvRepo := new(mocks.MockFlagEnvironmentRepository)
 	nilCache := &testhelpers.NilCache{}
+	nilPublisher := &testhelpers.NilAuditPublisher{}
 
 	// Expectations
 	flagRepo.On("GetByID", mock.Anything, mock.Anything).
 		Return(nil, domain.ErrNotFound)
 
 	// Act
-	svc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, nilCache)
+	auditSvc := service.NewAuditService(nilPublisher)
+	svc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, nilCache, auditSvc)
 	_, err := svc.GetFlag(context.Background(), uuid.New())
 
 	// Assert
@@ -172,6 +183,7 @@ func TestFlagService_EvaluateFlag_CacheMiss_FallbackToDB(t *testing.T) {
 	projectRepo := new(mocks.MockProjectRepository)
 	flagEnvRepo := new(mocks.MockFlagEnvironmentRepository)
 	flagCache := new(mocks.MockFlagCache)
+	nilPublisher := &testhelpers.NilAuditPublisher{}
 
 	projectID := uuid.New()
 	envID := uuid.New()
@@ -188,7 +200,8 @@ func TestFlagService_EvaluateFlag_CacheMiss_FallbackToDB(t *testing.T) {
 		Return(nil)
 
 	// Act
-	svc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, flagCache)
+	auditSvc := service.NewAuditService(nilPublisher)
+	svc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, flagCache, auditSvc)
 	enabled, err := svc.EvaluateFlag(context.Background(), "my-flag", projectID, envID)
 
 	// Assert
@@ -203,6 +216,7 @@ func TestFlagService_EvaluateFlag_CacheError_FallbackToDB(t *testing.T) {
 	projectRepo := new(mocks.MockProjectRepository)
 	flagEnvRepo := new(mocks.MockFlagEnvironmentRepository)
 	flagCache := new(mocks.MockFlagCache)
+	nilPublisher := &testhelpers.NilAuditPublisher{}
 
 	projectID := uuid.New()
 	envID := uuid.New()
@@ -218,8 +232,9 @@ func TestFlagService_EvaluateFlag_CacheError_FallbackToDB(t *testing.T) {
 	flagCache.On("SetEvaluation", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil)
 
-		// Act
-	svc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, flagCache)
+	// Act
+	auditSvc := service.NewAuditService(nilPublisher)
+	svc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, flagCache, auditSvc)
 	enabled, err := svc.EvaluateFlag(context.Background(), "my-flag", projectID, envID)
 
 	// Assert

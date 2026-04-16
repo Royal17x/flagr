@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/Royal17x/flagr/backend/pkg/kafka"
 	"net/http"
 
 	"github.com/Royal17x/flagr/backend/internal/cache"
@@ -13,13 +14,11 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// App holds the wired application graph and exposes the HTTP handler.
 type App struct {
 	Handler http.Handler
 }
 
-// New wires all layers (repo → service → handler) and returns a ready App.
-func New(cfg *config.Config, db *sqlx.DB, redisClient *redis.Client) *App {
+func New(cfg *config.Config, db *sqlx.DB, redisClient *redis.Client, kafkaProducer *kafka.Producer) *App {
 	// infrastructure
 	flagCache := cache.NewFlagCache(redisClient)
 
@@ -32,7 +31,8 @@ func New(cfg *config.Config, db *sqlx.DB, redisClient *redis.Client) *App {
 	tokenRepo := repository.NewTokenRepository(db)
 
 	// services
-	flagSvc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, flagCache)
+	auditSvc := service.NewAuditService(kafkaProducer)
+	flagSvc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, flagCache, auditSvc)
 	authSvc := service.NewAuthService(
 		userRepo,
 		tokenRepo,

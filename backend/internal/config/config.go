@@ -11,6 +11,7 @@ type Config struct {
 	HTTP     HTTPConfig
 	Postgres PostgresConfig
 	Redis    RedisConfig
+	Kafka    KafkaConfig
 	Auth     AuthConfig
 }
 
@@ -29,6 +30,12 @@ type RedisConfig struct {
 	Password string
 }
 
+type KafkaConfig struct {
+	Broker            string
+	AuditTopic        string
+	ReplicationFactor int16
+}
+
 type AuthConfig struct {
 	JWTSecret            string
 	AccessTokenDuration  time.Duration
@@ -44,10 +51,14 @@ func Load() *Config {
 	viper.SetDefault("http.write_timeout", 15*time.Second)
 
 	viper.SetDefault("postgres.dsn",
-		"postgres://flagr:flagr@localhost:5437/flagr?sslmode=disable")
+		"postgres://flagr:flagr@localhost:5432/flagr?sslmode=disable")
 
 	viper.SetDefault("redis.addr", "localhost:6380")
 	viper.SetDefault("redis.password", "")
+
+	viper.SetDefault("kafka.broker", "localhost:9092")
+	viper.SetDefault("kafka.audit_topic", "flag.audit")
+	viper.SetDefault("kafka.replication_factor", 1)
 
 	viper.SetDefault("auth.jwt_secret", "dev-secret-change-in-prod")
 	viper.SetDefault("auth.access_token_duration", 15*time.Minute)
@@ -65,6 +76,11 @@ func Load() *Config {
 		Redis: RedisConfig{
 			Addr:     viper.GetString("redis.addr"),
 			Password: viper.GetString("redis.password"),
+		},
+		Kafka: KafkaConfig{
+			Broker:            viper.GetString("kafka.broker"),
+			AuditTopic:        viper.GetString("kafka.audit_topic"),
+			ReplicationFactor: int16(viper.GetInt("kafka.replication_factor")),
 		},
 		Auth: AuthConfig{
 			JWTSecret:            viper.GetString("auth.jwt_secret"),
