@@ -12,6 +12,7 @@ type Config struct {
 	Postgres PostgresConfig
 	Redis    RedisConfig
 	Kafka    KafkaConfig
+	GRPC     GRPCConfig
 	Auth     AuthConfig
 }
 
@@ -34,6 +35,10 @@ type KafkaConfig struct {
 	Broker            string
 	AuditTopic        string
 	ReplicationFactor int16
+}
+
+type GRPCConfig struct {
+	Port string
 }
 
 type AuthConfig struct {
@@ -60,6 +65,8 @@ func Load() *Config {
 	viper.SetDefault("kafka.audit_topic", "flag.audit")
 	viper.SetDefault("kafka.replication_factor", 1)
 
+	viper.SetDefault("grpc.port", "50051")
+
 	viper.SetDefault("auth.jwt_secret", "dev-secret-change-in-prod")
 	viper.SetDefault("auth.access_token_duration", 15*time.Minute)
 	viper.SetDefault("auth.refresh_token_duration", 7*24*time.Hour)
@@ -81,6 +88,9 @@ func Load() *Config {
 			Broker:            viper.GetString("kafka.broker"),
 			AuditTopic:        viper.GetString("kafka.audit_topic"),
 			ReplicationFactor: int16(viper.GetInt("kafka.replication_factor")),
+		},
+		GRPC: GRPCConfig{
+			Port: viper.GetString("grpc.port"),
 		},
 		Auth: AuthConfig{
 			JWTSecret:            viper.GetString("auth.jwt_secret"),

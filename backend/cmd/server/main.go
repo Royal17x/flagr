@@ -3,7 +3,15 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/Royal17x/flagr/backend/internal/app"
+	cfg "github.com/Royal17x/flagr/backend/internal/config"
+	grpcserver "github.com/Royal17x/flagr/backend/internal/grpc"
 	"github.com/Royal17x/flagr/backend/pkg/kafka"
+	pg "github.com/Royal17x/flagr/backend/pkg/postgres"
+	redispkg "github.com/Royal17x/flagr/backend/pkg/redis"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"log"
 	"log/slog"
 	"net/http"
@@ -11,14 +19,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/Royal17x/flagr/backend/internal/app"
-	cfg "github.com/Royal17x/flagr/backend/internal/config"
-	pg "github.com/Royal17x/flagr/backend/pkg/postgres"
-	redispkg "github.com/Royal17x/flagr/backend/pkg/redis"
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 // @title           Flagr API
@@ -38,14 +38,17 @@ import (
 // @name Authorization
 // @description Type "Bearer" followed by a space and JWT token.
 func main() {
+	// config
 	config := cfg.Load()
 
+	// postgres
 	db, err := pg.New(config.Postgres.DSN)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
+	// postgres migrations
 	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	if err != nil {
 		log.Fatal(err)
@@ -58,22 +61,26 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// redis
 	redisClient, err := redispkg.New(config.Redis.Addr, config.Redis.Password)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer redisClient.Close()
 
+	// kafka topics
 	if err := kafka.EnsureTopics(context.Background(), config.Kafka.Broker, config.Kafka.ReplicationFactor); err != nil {
 		log.Fatal(err)
 	}
 
+	// kafka producer and consumer
 	kafkaProducer := kafka.NewProducer(config.Kafka.Broker)
 	defer kafkaProducer.Close()
 
 	kafkaConsumer := kafka.NewConsumer(config.Kafka.Broker, "flagr-audit-consumer")
 	defer kafkaConsumer.Close()
 
+	// app.go
 	application := app.New(config, db, redisClient, kafkaProducer)
 
 	srv := &http.Server{
@@ -83,6 +90,15 @@ func main() {
 		WriteTimeout: config.HTTP.WriteTimeout,
 	}
 
+	//gRPC server
+	go func() {
+		slog.Info("grpc listening", "port", config.GRPC.Port)
+		if err := grpcserver.StartGRPCServer(application.GRPCServer, config.GRPC.Port); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	// http server
 	go func() {
 		slog.Info("flagr listening", "addr", config.HTTP.Port)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -90,6 +106,7 @@ func main() {
 		}
 	}()
 
+	// kafka consume
 	consumerCtx, consumerCancel := context.WithCancel(context.Background())
 	defer consumerCancel()
 
@@ -103,12 +120,13 @@ func main() {
 		return nil
 	})
 
+	// graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan
 
+	application.GRPCServer.GracefulStop()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	srv.Shutdown(ctx)
-
 }

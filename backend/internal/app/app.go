@@ -2,10 +2,12 @@ package app
 
 import (
 	"github.com/Royal17x/flagr/backend/pkg/kafka"
+	"google.golang.org/grpc"
 	"net/http"
 
 	"github.com/Royal17x/flagr/backend/internal/cache"
 	"github.com/Royal17x/flagr/backend/internal/config"
+	grpcserver "github.com/Royal17x/flagr/backend/internal/grpc"
 	"github.com/Royal17x/flagr/backend/internal/handler"
 	"github.com/Royal17x/flagr/backend/internal/middleware"
 	"github.com/Royal17x/flagr/backend/internal/repository"
@@ -15,7 +17,8 @@ import (
 )
 
 type App struct {
-	Handler http.Handler
+	Handler    http.Handler
+	GRPCServer *grpc.Server
 }
 
 func New(cfg *config.Config, db *sqlx.DB, redisClient *redis.Client, kafkaProducer *kafka.Producer) *App {
@@ -51,5 +54,11 @@ func New(cfg *config.Config, db *sqlx.DB, redisClient *redis.Client, kafkaProduc
 	// router
 	router := handler.NewRouter(flagHandler, authHandler, authMiddleware)
 
-	return &App{Handler: router}
+	//gRPC
+	grpcSrv, _ := grpcserver.NewGRPCServer(flagSvc, authSvc)
+
+	return &App{
+		Handler:    router,
+		GRPCServer: grpcSrv,
+	}
 }
