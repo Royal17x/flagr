@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package flagr.v1;
+
+option go_package = "github.com/Royal17x/flagr/backend/gen/proto/v1;flagrv1";
+
+service FlagService {
+  rpc EvaluateFlag(EvaluateFlagRequest) returns (EvaluateFlagResponse);
+  rpc EvaluateBatch(EvaluateBatchRequest) returns (EvaluateBatchResponse);
+  rpc WatchFlags(WatchFlagsRequest) returns (stream FlagUpdate);
+}
+
+message EvaluateFlagRequest {
+  string flag_key = 1;
+  string project_id = 2;
+  string environment_id = 3;
+  map<string,string> context = 4;
+}
+message EvaluateFlagResponse{
+  bool enabled = 1;
+  string flag_key = 2;
+  string reason = 3;
+  int64 evaluation_time_ms = 4;
+}
+message EvaluateBatchRequest{
+  repeated EvaluateFlagRequest requests = 1;
+}
+message EvaluateBatchResponse{
+  repeated EvaluateFlagResponse responses = 1;
+}
+message WatchFlagsRequest{
+  string project_id = 1;
+  string environment_id = 2;
+}
+message FlagUpdate{
+  string flag_key = 1;
+  bool enabled = 2;
+  string action = 3;
+}
+
