@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -47,7 +48,7 @@ type AuthConfig struct {
 	RefreshTokenDuration time.Duration
 }
 
-func Load() *Config {
+func Load() (*Config, error) {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
@@ -67,9 +68,16 @@ func Load() *Config {
 
 	viper.SetDefault("grpc.port", "50051")
 
-	viper.SetDefault("auth.jwt_secret", "dev-secret-change-in-prod")
 	viper.SetDefault("auth.access_token_duration", 15*time.Minute)
 	viper.SetDefault("auth.refresh_token_duration", 7*24*time.Hour)
+
+	secret := viper.GetString("auth.jwt_secret")
+	if secret == "" {
+		return nil, fmt.Errorf("JWT_SECRET is required and must be set")
+	}
+	if len(secret) < 32 {
+		return nil, fmt.Errorf("JWT_SECRET must be at least 32 characters")
+	}
 
 	return &Config{
 		HTTP: HTTPConfig{
@@ -97,5 +105,5 @@ func Load() *Config {
 			AccessTokenDuration:  viper.GetDuration("auth.access_token_duration"),
 			RefreshTokenDuration: viper.GetDuration("auth.refresh_token_duration"),
 		},
-	}
+	}, nil
 }

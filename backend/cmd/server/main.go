@@ -39,8 +39,10 @@ import (
 // @description Type "Bearer" followed by a space and JWT token.
 func main() {
 	// config
-	config := cfg.Load()
-
+	config, err := cfg.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
 	// postgres
 	db, err := pg.New(config.Postgres.DSN)
 	if err != nil {

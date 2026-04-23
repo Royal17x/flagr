@@ -16,6 +16,7 @@ type FlagService struct {
 	flags    domain.FlagRepository
 	projects domain.ProjectRepository
 	flagEnvs domain.FlagEnvironmentRepository
+	envs     domain.EnvironmentRepository
 	cache    cache.FlagCache
 	audit    *AuditService
 }
@@ -24,6 +25,7 @@ func NewFlagService(
 	flags domain.FlagRepository,
 	projects domain.ProjectRepository,
 	flagEnvs domain.FlagEnvironmentRepository,
+	envs domain.EnvironmentRepository,
 	cache cache.FlagCache,
 	audit *AuditService,
 ) *FlagService {
@@ -31,6 +33,7 @@ func NewFlagService(
 		flags:    flags,
 		projects: projects,
 		flagEnvs: flagEnvs,
+		envs:     envs,
 		cache:    cache,
 		audit:    audit,
 	}
@@ -55,7 +58,25 @@ func (f *FlagService) CreateFlag(ctx context.Context, flag *domain.Flag) (uuid.U
 
 	actorID, _ := ctx.Value(middleware.UserIDKey).(uuid.UUID)
 	f.audit.RecordFlagCreated(ctx, actorID, id, flag.ProjectID)
+	envs, err := f.envs.List(ctx, flag.ProjectID)
 
+	if err != nil {
+		slog.Warn("failed to auto-create flag environments", "flag_id", id, "error", err)
+		return id, nil
+	}
+	for _, env := range envs {
+		if err := f.flagEnvs.Upsert(ctx, &domain.FlagEnvironment{
+			FlagID:            id,
+			EnvironmentID:     env.ID,
+			Enabled:           false,
+			RolloutPercentage: 0,
+		}); err != nil {
+			slog.Warn("failed to auto-create flag environment",
+				"flag_id", id,
+				"env_id", env.ID,
+				"error", err)
+		}
+	}
 	return id, nil
 }
 

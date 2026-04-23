@@ -10,7 +10,7 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-func NewRouter(flagHandler *FlagHandler, authHandler *AuthHandler, authMiddleware *middleware.AuthMiddleware) http.Handler {
+func NewRouter(flagHandler *FlagHandler, authHandler *AuthHandler, healthHandler *HealthHandler, authMiddleware *middleware.AuthMiddleware, sdkAuthMiddleware *middleware.SDKAuthMiddleware) http.Handler {
 	r := chi.NewRouter()
 
 	rl := middleware.NewRateLimiter(60, 120)
@@ -30,13 +30,18 @@ func NewRouter(flagHandler *FlagHandler, authHandler *AuthHandler, authMiddlewar
 			r.Post("/login", authHandler.Login)
 			r.Post("/refresh", authHandler.Refresh)
 			r.Post("/logout", authHandler.Logout)
+			r.Get("/health/live", healthHandler.Live)
+			r.Get("/health/live", healthHandler.Ready)
+		})
+		r.Group(func(r chi.Router) {
+			r.Use(sdkAuthMiddleware.Authenticate)
+			r.Get("/flags/evaluate", flagHandler.Evaluate)
 		})
 		r.Group(func(r chi.Router) {
 			r.Use(authMiddleware.Authenticate)
 			r.Route("/flags", func(r chi.Router) {
 				r.Post("/", flagHandler.Create)
 				r.Get("/", flagHandler.List)
-				r.Get("/evaluate", flagHandler.Evaluate)
 				r.Get("/{id}", flagHandler.GetByID)
 				r.Put("/{id}", flagHandler.Update)
 				r.Delete("/{id}", flagHandler.Delete)

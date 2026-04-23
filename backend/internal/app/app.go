@@ -32,10 +32,11 @@ func New(cfg *config.Config, db *sqlx.DB, redisClient *redis.Client, kafkaProduc
 	flagEnvRepo := repository.NewFlagEnvironmentRepository(db)
 	userRepo := repository.NewUserRepository(db)
 	tokenRepo := repository.NewTokenRepository(db)
+	sdkKeyRepo := repository.NewSDKKeyRepository(db)
 
 	// services
 	auditSvc := service.NewAuditService(kafkaProducer)
-	flagSvc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, flagCache, auditSvc)
+	flagSvc := service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, envRepo, flagCache, auditSvc)
 	authSvc := service.NewAuthService(
 		userRepo,
 		tokenRepo,
@@ -49,10 +50,12 @@ func New(cfg *config.Config, db *sqlx.DB, redisClient *redis.Client, kafkaProduc
 	// handlers & middleware
 	flagHandler := handler.NewFlagHandler(flagSvc)
 	authHandler := handler.NewAuthHandler(authSvc)
+	healthHandler := handler.NewHealthHandler(db, redisClient)
 	authMiddleware := middleware.NewAuthMiddleware(authSvc)
+	sdkAuthMiddleware := middleware.NewSDKAuthMiddleware(sdkKeyRepo)
 
 	// router
-	router := handler.NewRouter(flagHandler, authHandler, authMiddleware)
+	router := handler.NewRouter(flagHandler, authHandler, healthHandler, authMiddleware, sdkAuthMiddleware)
 
 	//gRPC
 	grpcSrv, _ := grpcserver.NewGRPCServer(flagSvc, authSvc)
