@@ -48,3 +48,10 @@ type RefreshTokenRepository interface {
 	DeleteByTokenHash(ctx context.Context, hash string) error
 	DeleteAllByUserID(ctx context.Context, userID uuid.UUID) error
 }
+
+type SDKKeyRepository interface {
+	Create(ctx context.Context, key *SDKKey, rawKey string) error
+	GetByKeyHash(ctx context.Context, hash string) (*SDKKey, error)
+	ListByProject(ctx context.Context, projectID uuid.UUID) ([]*SDKKey, error)
+	Delete(ctx context.Context, id uuid.UUID) error
+}
