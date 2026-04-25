@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/Royal17x/flagr/backend/pkg/slug"
 	"time"
 
 	"github.com/Royal17x/flagr/backend/internal/domain"
@@ -19,6 +20,9 @@ import (
 type AuthService struct {
 	users      domain.UserRepository
 	tokens     domain.RefreshTokenRepository
+	orgs       domain.OrganizationRepository
+	projects   domain.ProjectRepository
+	envs       domain.EnvironmentRepository
 	jwtSecret  []byte
 	accessTTL  time.Duration
 	refreshTTL time.Duration
@@ -27,6 +31,9 @@ type AuthService struct {
 func NewAuthService(
 	users domain.UserRepository,
 	tokens domain.RefreshTokenRepository,
+	orgs domain.OrganizationRepository,
+	projects domain.ProjectRepository,
+	envs domain.EnvironmentRepository,
 	jwtSecret string,
 	accessTTL time.Duration,
 	refreshTTL time.Duration,
@@ -34,30 +41,66 @@ func NewAuthService(
 	return &AuthService{
 		users:      users,
 		tokens:     tokens,
+		orgs:       orgs,
+		projects:   projects,
+		envs:       envs,
 		jwtSecret:  []byte(jwtSecret),
 		accessTTL:  accessTTL,
 		refreshTTL: refreshTTL,
 	}
 }
 
-func (a *AuthService) Register(ctx context.Context, email, password string, orgID uuid.UUID) (port.TokenPair, error) {
-	id := uuid.New()
+func (a *AuthService) Register(ctx context.Context, email, password, orgName string) (port.TokenPair, error) {
 	_, err := a.users.GetByEmail(ctx, email)
 	if err == nil {
 		return port.TokenPair{}, domain.ErrAlreadyExists
 	}
+
+	orgID := uuid.New()
+	org := domain.Organization{
+		ID:   orgID,
+		Name: orgName,
+		Slug: fmt.Sprintf("%s-%s", slug.Generate(orgName), orgID.String()[:8]),
+	}
+	orgID, err = a.orgs.Create(ctx, &org)
+	if err != nil {
+		return port.TokenPair{}, fmt.Errorf("authService.Register: create org: %w", err)
+	}
+
+	projectID := uuid.New()
+	project := domain.Project{
+		ID:             projectID,
+		OrganizationID: orgID,
+		Name:           "Default Project",
+		Description:    "Created automatically on registration",
+	}
+	projectID, err = a.projects.Create(ctx, &project)
+	if err != nil {
+		return port.TokenPair{}, fmt.Errorf("authService.Register: create project: %w", err)
+	}
+
+	for _, envName := range []string{"production", "staging"} {
+		env := domain.Environment{
+			ProjectID: projectID,
+			Name:      envName,
+			Slug:      envName,
+		}
+		if _, err = a.envs.Create(ctx, &env); err != nil {
+			return port.TokenPair{}, fmt.Errorf("authService.Register: create env: %w", err)
+		}
+	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
 		return port.TokenPair{}, fmt.Errorf("authService.Register: %w", err)
 	}
 	newUser := domain.User{
-		ID:           id,
+		ID:           uuid.New(),
 		OrgID:        orgID,
 		Email:        email,
 		PasswordHash: string(hashedPassword),
 	}
-	id, err = a.users.Create(ctx, &newUser)
-	if err != nil {
+	if _, err = a.users.Create(ctx, &newUser); err != nil {
 		return port.TokenPair{}, fmt.Errorf("authService.Register: %w", err)
 	}
 	return a.Login(ctx, email, password)

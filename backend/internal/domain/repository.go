@@ -55,3 +55,8 @@ type SDKKeyRepository interface {
 	ListByProject(ctx context.Context, projectID uuid.UUID) ([]*SDKKey, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 }
+
+type OrganizationRepository interface {
+	Create(ctx context.Context, org *Organization) (uuid.UUID, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*Organization, error)
+}
