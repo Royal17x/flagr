@@ -2,10 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/Royal17x/flagr/backend/internal/port"
-	"github.com/google/uuid"
 )
 
 type AuthHandler struct {
@@ -38,13 +38,9 @@ func (a *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	orgID, err := uuid.Parse(req.OrgID)
+	tokenPair, err := a.authService.Register(r.Context(), req.Email, req.Password, req.OrgName)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-	tokenPair, err := a.authService.Register(r.Context(), req.Email, req.Password, orgID)
-	if err != nil {
+		slog.Error("register failed", "error", err)
 		domainErrorToHTTP(w, err)
 		return
 	}

@@ -20,6 +20,7 @@ func setupBenchData(b *testing.B) (svcWithCache *service.FlagService, svcWithout
 	flagRepo := repository.NewFlagRepository(db)
 	projectRepo := repository.NewProjectRepository(db)
 	flagEnvRepo := repository.NewFlagEnvironmentRepository(db)
+	envRepo := repository.NewEnvironmentRepository(db)
 	flagCache := cache.NewFlagCache(redisClient)
 	nilCache := &testhelpers.NilCache{}
 	nilPublisher := &testhelpers.NilAuditPublisher{}
@@ -42,8 +43,8 @@ func setupBenchData(b *testing.B) (svcWithCache *service.FlagService, svcWithout
 		FlagID: flagID, EnvironmentID: envID, Enabled: true,
 	})
 	auditSvc := service.NewAuditService(nilPublisher)
-	svcWithCache = service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, flagCache, auditSvc)
-	svcWithoutCache = service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, nilCache, auditSvc)
+	svcWithCache = service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, envRepo, flagCache, auditSvc)
+	svcWithoutCache = service.NewFlagService(flagRepo, projectRepo, flagEnvRepo, envRepo, nilCache, auditSvc)
 
 	svcWithCache.EvaluateFlag(ctx, "bench-flag", projectID, envID)
 

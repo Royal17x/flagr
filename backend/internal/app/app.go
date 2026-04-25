@@ -28,6 +28,7 @@ func New(cfg *config.Config, db *sqlx.DB, redisClient *redis.Client, kafkaProduc
 	// repositories
 	flagRepo := repository.NewFlagRepository(db)
 	projectRepo := repository.NewProjectRepository(db)
+	orgRepo := repository.NewOrganizationRepository(db)
 	envRepo := repository.NewEnvironmentRepository(db)
 	flagEnvRepo := repository.NewFlagEnvironmentRepository(db)
 	userRepo := repository.NewUserRepository(db)
@@ -40,6 +41,9 @@ func New(cfg *config.Config, db *sqlx.DB, redisClient *redis.Client, kafkaProduc
 	authSvc := service.NewAuthService(
 		userRepo,
 		tokenRepo,
+		orgRepo,
+		projectRepo,
+		envRepo,
 		cfg.Auth.JWTSecret,
 		cfg.Auth.AccessTokenDuration,
 		cfg.Auth.RefreshTokenDuration,
