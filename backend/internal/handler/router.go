@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 
 	_ "github.com/Royal17x/flagr/backend/docs"
@@ -19,19 +20,22 @@ func NewRouter(flagHandler *FlagHandler, authHandler *AuthHandler, healthHandler
 	r.Use(middleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
 	r.Use(rl.Middleware)
+	r.Use(middleware.PrometheusMiddleware)
 
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
 	))
-
+	r.Get("/health/live", healthHandler.Live)
+	r.Get("/health/ready", healthHandler.Ready)
+	r.Handle("/metrics", promhttp.Handler())
+	
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/register", authHandler.Register)
 			r.Post("/login", authHandler.Login)
 			r.Post("/refresh", authHandler.Refresh)
 			r.Post("/logout", authHandler.Logout)
-			r.Get("/health/live", healthHandler.Live)
-			r.Get("/health/live", healthHandler.Ready)
+
 		})
 		r.Group(func(r chi.Router) {
 			r.Use(sdkAuthMiddleware.Authenticate)

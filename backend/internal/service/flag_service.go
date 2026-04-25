@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Royal17x/flagr/backend/internal/metrics"
 	"github.com/Royal17x/flagr/backend/internal/middleware"
 	"log/slog"
+	"strconv"
+	"time"
 
 	"github.com/Royal17x/flagr/backend/internal/cache"
 	"github.com/Royal17x/flagr/backend/internal/domain"
@@ -126,8 +129,14 @@ func (f *FlagService) DeleteFlag(ctx context.Context, id uuid.UUID) error {
 }
 
 func (f *FlagService) EvaluateFlag(ctx context.Context, flagKey string, projectID uuid.UUID, environmentID uuid.UUID) (bool, error) {
+	start := time.Now()
+	defer func() {
+		metrics.FlagEvaluationDuration.Observe(time.Since(start).Seconds())
+	}()
 	enabled, err := f.cache.GetEvaluation(ctx, flagKey, projectID, environmentID)
 	if err == nil {
+		metrics.CacheHitsTotal.Inc()
+		metrics.FlagEvaluationsTotal.WithLabelValues(flagKey, strconv.FormatBool(enabled), "cache").Inc()
 		return enabled, nil
 	}
 	if !errors.Is(err, cache.ErrCacheMiss) {
@@ -136,6 +145,7 @@ func (f *FlagService) EvaluateFlag(ctx context.Context, flagKey string, projectI
 			"flag", flagKey,
 		)
 	}
+	metrics.CacheMissesTotal.Inc()
 	gotFlag, err := f.flags.GetByKey(ctx, projectID, flagKey)
 	if err != nil {
 		return false, fmt.Errorf("FlagService.EvaluateFlag: %w", err)
@@ -146,6 +156,6 @@ func (f *FlagService) EvaluateFlag(ctx context.Context, flagKey string, projectI
 	}
 
 	_ = f.cache.SetEvaluation(ctx, flagKey, projectID, environmentID, fe.Enabled)
-
+	metrics.FlagEvaluationsTotal.WithLabelValues(flagKey, strconv.FormatBool(enabled), "db").Inc()
 	return fe.Enabled, nil
 }
