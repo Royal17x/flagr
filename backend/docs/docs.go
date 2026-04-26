@@ -190,7 +190,7 @@ const docTemplate = `{
         },
         "/auth/register": {
             "post": {
-                "description": "Creates a new user account",
+                "description": "Creates organization, default project, production and staging environments, and user account",
                 "consumes": [
                     "application/json"
                 ],
@@ -221,7 +221,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Validation error",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -230,7 +230,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "Email already exists",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -381,7 +381,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "SDKKeyAuth": []
                     }
                 ],
                 "description": "Returns a state with current flag ID",
@@ -639,6 +639,61 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/health/live": {
+            "get": {
+                "description": "Returns 200 if service is running",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Liveness probe",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/health/ready": {
+            "get": {
+                "description": "Returns 200 if service is ready to accept traffic (DB and Redis are up)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Readiness probe",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -703,9 +758,9 @@ const docTemplate = `{
                     "type": "string",
                     "example": "user@company.com"
                 },
-                "org_id": {
+                "org_name": {
                     "type": "string",
-                    "example": "77c00606-0099-4642-83e4-0d03c6f78c36"
+                    "example": "My Company"
                 },
                 "password": {
                     "type": "string",
@@ -740,6 +795,12 @@ const docTemplate = `{
             "description": "Type \"Bearer\" followed by a space and JWT token.",
             "type": "apiKey",
             "name": "Authorization",
+            "in": "header"
+        },
+        "SDKKeyAuth": {
+            "description": "SDK key for evaluate endpoints.",
+            "type": "apiKey",
+            "name": "X-SDK-Key",
             "in": "header"
         }
     }

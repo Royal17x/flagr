@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"github.com/Royal17x/flagr/backend/internal/validator"
 	"net/http"
 
 	"github.com/Royal17x/flagr/backend/internal/domain"
@@ -36,6 +37,10 @@ func (h *FlagHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req createFlagRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if err := validator.ValidateFlagKey(req.Key); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
@@ -206,7 +211,7 @@ func (h *FlagHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  map[string]string
 // @Failure      404  {object}  map[string]string
 // @Failure      500  {object}  map[string]string
-// @Security BearerAuth
+// @Security SDKKeyAuth
 // @Router  /flags/evaluate [get]
 func (h *FlagHandler) Evaluate(w http.ResponseWriter, r *http.Request) {
 	key := r.URL.Query().Get("key")

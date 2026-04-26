@@ -37,6 +37,11 @@ import (
 // @in header
 // @name Authorization
 // @description Type "Bearer" followed by a space and JWT token.
+
+// @securityDefinitions.apikey SDKKeyAuth
+// @in header
+// @name X-SDK-Key
+// @description SDK key for evaluate endpoints.
 func main() {
 	// config
 	config, err := cfg.Load()

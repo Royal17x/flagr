@@ -32,6 +32,10 @@ func NewRateLimiter(r rate.Limit, b int) *RateLimiter {
 	return rl
 }
 
+func NewAuthRateLimiter() *RateLimiter {
+	return NewRateLimiter(10, 10)
+}
+
 func (rl *RateLimiter) getLimiter(ip string) *rate.Limiter {
 	rl.mu.RLock()
 	if l, ok := rl.limiters[ip]; ok {

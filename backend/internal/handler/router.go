@@ -15,7 +15,11 @@ func NewRouter(flagHandler *FlagHandler, authHandler *AuthHandler, healthHandler
 	r := chi.NewRouter()
 
 	rl := middleware.NewRateLimiter(60, 120)
+	corsConfig := middleware.DefaultCORSConfig()
+	authRL := middleware.NewAuthRateLimiter()
 
+	r.Use(middleware.SecurityHeaders)
+	r.Use(middleware.CORS(corsConfig))
 	r.Use(chiMiddleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
@@ -28,9 +32,10 @@ func NewRouter(flagHandler *FlagHandler, authHandler *AuthHandler, healthHandler
 	r.Get("/health/live", healthHandler.Live)
 	r.Get("/health/ready", healthHandler.Ready)
 	r.Handle("/metrics", promhttp.Handler())
-	
+
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {
+			r.Use(authRL.Middleware)
 			r.Post("/register", authHandler.Register)
 			r.Post("/login", authHandler.Login)
 			r.Post("/refresh", authHandler.Refresh)
