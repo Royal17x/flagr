@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"github.com/Royal17x/flagr/backend/internal/validator"
 	"log/slog"
 	"net/http"
 
@@ -18,14 +19,14 @@ func NewAuthHandler(authService port.AuthServiceInterface) *AuthHandler {
 
 // Register godoc
 // @Summary      Register new user
-// @Description  Creates a new user account
+// @Description  Creates organization, default project, production and staging environments, and user account
 // @Tags         auth
 // @Accept       json
 // @Produce      json
 // @Param        request  body      registerRequest  true  "Register data"
 // @Success      201      {object}  map[string]any
-// @Failure      400      {object}  map[string]string
-// @Failure      409      {object}  map[string]string
+// @Failure      400      {object}  map[string]string  "Validation error"
+// @Failure      409      {object}  map[string]string  "Email already exists"
 // @Failure      500      {object}  map[string]string
 // @Router       /auth/register [post]
 func (a *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
@@ -34,8 +35,16 @@ func (a *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	if req.Email == "" || req.Password == "" {
-		respondError(w, http.StatusBadRequest, "invalid request body")
+	if err := validator.ValidateEmail(req.Email); err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := validator.ValidatePassword(req.Password); err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := validator.ValidateOrgName(req.OrgName); err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	tokenPair, err := a.authService.Register(r.Context(), req.Email, req.Password, req.OrgName)

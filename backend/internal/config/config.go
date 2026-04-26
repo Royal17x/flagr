@@ -15,6 +15,7 @@ type Config struct {
 	Kafka    KafkaConfig
 	GRPC     GRPCConfig
 	Auth     AuthConfig
+	CORS     CORSConfig
 }
 
 type HTTPConfig struct {
@@ -48,6 +49,10 @@ type AuthConfig struct {
 	RefreshTokenDuration time.Duration
 }
 
+type CORSConfig struct {
+	AllowedOrigins []string
+}
+
 func Load() (*Config, error) {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
@@ -70,6 +75,8 @@ func Load() (*Config, error) {
 
 	viper.SetDefault("auth.access_token_duration", 15*time.Minute)
 	viper.SetDefault("auth.refresh_token_duration", 7*24*time.Hour)
+
+	viper.SetDefault("cors.allowed_origins", []string{"http://localhost:3000"})
 
 	secret := viper.GetString("auth.jwt_secret")
 	if secret == "" {
@@ -104,6 +111,9 @@ func Load() (*Config, error) {
 			JWTSecret:            viper.GetString("auth.jwt_secret"),
 			AccessTokenDuration:  viper.GetDuration("auth.access_token_duration"),
 			RefreshTokenDuration: viper.GetDuration("auth.refresh_token_duration"),
+		},
+		CORS: CORSConfig{
+			AllowedOrigins: viper.GetStringSlice("cors.allowed_origins"),
 		},
 	}, nil
 }

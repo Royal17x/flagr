@@ -42,8 +42,8 @@ definitions:
       email:
         example: user@company.com
         type: string
-      org_id:
-        example: 77c00606-0099-4642-83e4-0d03c6f78c36
+      org_name:
+        example: My Company
         type: string
       password:
         example: securepassword
@@ -189,7 +189,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Creates a new user account
+      description: Creates organization, default project, production and staging environments,
+        and user account
       parameters:
       - description: Register data
         in: body
@@ -206,13 +207,13 @@ paths:
             additionalProperties: true
             type: object
         "400":
-          description: Bad Request
+          description: Validation error
           schema:
             additionalProperties:
               type: string
             type: object
         "409":
-          description: Conflict
+          description: Email already exists
           schema:
             additionalProperties:
               type: string
@@ -475,10 +476,47 @@ paths:
               type: string
             type: object
       security:
-      - BearerAuth: []
+      - SDKKeyAuth: []
       summary: Get "enabled" of flag
       tags:
       - flags
+  /health/live:
+    get:
+      description: Returns 200 if service is running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Liveness probe
+      tags:
+      - health
+  /health/ready:
+    get:
+      description: Returns 200 if service is ready to accept traffic (DB and Redis
+        are up)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Readiness probe
+      tags:
+      - health
 schemes:
 - http
 - https
@@ -487,5 +525,10 @@ securityDefinitions:
     description: Type "Bearer" followed by a space and JWT token.
     in: header
     name: Authorization
+    type: apiKey
+  SDKKeyAuth:
+    description: SDK key for evaluate endpoints.
+    in: header
+    name: X-SDK-Key
     type: apiKey
 swagger: "2.0"
