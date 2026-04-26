@@ -10,6 +10,7 @@ jobs:
   deploy:
     name: Deploy to production
     runs-on: ubuntu-latest
+    if: ${{ secrets.SERVER_HOST != '' }}
     needs: []
 
     steps:
