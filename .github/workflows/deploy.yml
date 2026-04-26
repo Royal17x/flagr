@@ -1,17 +1,12 @@
 name: Deploy
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'backend/**'
+  workflow_dispatch:
 
 jobs:
   deploy:
     name: Deploy to production
     runs-on: ubuntu-latest
-    if: ${{ secrets.SERVER_HOST != '' }}
-    needs: []
 
     steps:
       - name: Checkout
