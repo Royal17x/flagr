@@ -6,6 +6,7 @@ import (
 	"github.com/Royal17x/flagr/backend/internal/app"
 	cfg "github.com/Royal17x/flagr/backend/internal/config"
 	grpcserver "github.com/Royal17x/flagr/backend/internal/grpc"
+	"github.com/Royal17x/flagr/backend/internal/tracing"
 	"github.com/Royal17x/flagr/backend/pkg/kafka"
 	pg "github.com/Royal17x/flagr/backend/pkg/postgres"
 	redispkg "github.com/Royal17x/flagr/backend/pkg/redis"
@@ -48,6 +49,20 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	//tracing
+	if config.Tracing.Enabled {
+		shutdown, err := tracing.Init(
+			context.Background(),
+			"flagr",
+			config.Tracing.JaegerEndpoint,
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer shutdown(context.Background())
+	}
+
 	// postgres
 	db, err := pg.New(config.Postgres.DSN)
 	if err != nil {

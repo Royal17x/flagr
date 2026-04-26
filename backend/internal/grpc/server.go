@@ -4,6 +4,7 @@ import (
 	"fmt"
 	pb "github.com/Royal17x/flagr/backend/gen/proto/v1"
 	"github.com/Royal17x/flagr/backend/internal/port"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"net"
@@ -11,6 +12,7 @@ import (
 
 func NewGRPCServer(flagSvc port.FlagServiceInterface, authSvc port.AuthServiceInterface) (*grpc.Server, *FlagServer) {
 	srv := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
 			UnaryLoggingInterceptor,
 			UnaryAuthInterceptor(authSvc),

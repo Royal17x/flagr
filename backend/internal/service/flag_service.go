@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/Royal17x/flagr/backend/internal/metrics"
 	"github.com/Royal17x/flagr/backend/internal/middleware"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"log/slog"
 	"strconv"
 	"time"
@@ -129,12 +131,22 @@ func (f *FlagService) DeleteFlag(ctx context.Context, id uuid.UUID) error {
 }
 
 func (f *FlagService) EvaluateFlag(ctx context.Context, flagKey string, projectID uuid.UUID, environmentID uuid.UUID) (bool, error) {
+	ctx, span := otel.Tracer("flagr").Start(ctx, "FlagService.EvaluateFlag")
+	defer span.End()
+
+	span.SetAttributes(
+		attribute.String("flag.key", flagKey),
+		attribute.String("project.id", projectID.String()),
+		attribute.String("environment.id", environmentID.String()),
+	)
+
 	start := time.Now()
 	defer func() {
 		metrics.FlagEvaluationDuration.Observe(time.Since(start).Seconds())
 	}()
 	enabled, err := f.cache.GetEvaluation(ctx, flagKey, projectID, environmentID)
 	if err == nil {
+		span.SetAttributes(attribute.String("cache.result", "hit"))
 		metrics.CacheHitsTotal.Inc()
 		metrics.FlagEvaluationsTotal.WithLabelValues(flagKey, strconv.FormatBool(enabled), "cache").Inc()
 		return enabled, nil
@@ -145,6 +157,7 @@ func (f *FlagService) EvaluateFlag(ctx context.Context, flagKey string, projectI
 			"flag", flagKey,
 		)
 	}
+	span.SetAttributes(attribute.String("cache.result", "miss"))
 	metrics.CacheMissesTotal.Inc()
 	gotFlag, err := f.flags.GetByKey(ctx, projectID, flagKey)
 	if err != nil {
