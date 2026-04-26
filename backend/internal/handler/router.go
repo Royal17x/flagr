@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"net/http"
 
 	_ "github.com/Royal17x/flagr/backend/docs"
@@ -58,5 +59,5 @@ func NewRouter(flagHandler *FlagHandler, authHandler *AuthHandler, healthHandler
 		})
 	})
 
-	return r
+	return otelhttp.NewHandler(r, "flagr-http")
 }

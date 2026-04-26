@@ -16,6 +16,7 @@ type Config struct {
 	GRPC     GRPCConfig
 	Auth     AuthConfig
 	CORS     CORSConfig
+	Tracing  TracingConfig
 }
 
 type HTTPConfig struct {
@@ -53,6 +54,11 @@ type CORSConfig struct {
 	AllowedOrigins []string
 }
 
+type TracingConfig struct {
+	JaegerEndpoint string
+	Enabled        bool
+}
+
 func Load() (*Config, error) {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
@@ -77,6 +83,9 @@ func Load() (*Config, error) {
 	viper.SetDefault("auth.refresh_token_duration", 7*24*time.Hour)
 
 	viper.SetDefault("cors.allowed_origins", []string{"http://localhost:3000"})
+
+	viper.SetDefault("tracing.jaeger_endpoint", "localhost:4317")
+	viper.SetDefault("tracing.enabled", true)
 
 	secret := viper.GetString("auth.jwt_secret")
 	if secret == "" {
@@ -114,6 +123,10 @@ func Load() (*Config, error) {
 		},
 		CORS: CORSConfig{
 			AllowedOrigins: viper.GetStringSlice("cors.allowed_origins"),
+		},
+		Tracing: TracingConfig{
+			JaegerEndpoint: viper.GetString("tracing.jaeger_endpoint"),
+			Enabled:        viper.GetBool("tracing.enabled"),
 		},
 	}, nil
 }
