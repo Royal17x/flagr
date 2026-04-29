@@ -2,8 +2,9 @@ package handler
 
 import (
 	"encoding/json"
-	"github.com/Royal17x/flagr/backend/internal/validator"
 	"net/http"
+
+	"github.com/Royal17x/flagr/backend/internal/validator"
 
 	"github.com/Royal17x/flagr/backend/internal/domain"
 	"github.com/Royal17x/flagr/backend/internal/port"
@@ -63,7 +64,8 @@ func (h *FlagHandler) Create(w http.ResponseWriter, r *http.Request) {
 		domainErrorToHTTP(w, err)
 		return
 	}
-	respondJSON(w, http.StatusCreated, map[string]any{"flag_id": flagID})
+	newFlag.ID = flagID
+	respondJSON(w, http.StatusCreated, newFlag)
 }
 
 // GetByID godoc
@@ -120,7 +122,7 @@ func (h *FlagHandler) List(w http.ResponseWriter, r *http.Request) {
 		domainErrorToHTTP(w, err)
 		return
 	}
-	respondJSON(w, http.StatusOK, map[string]any{"flags": flags})
+	respondJSON(w, http.StatusOK, flags)
 }
 
 // Update godoc

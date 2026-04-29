@@ -48,7 +48,7 @@ func New(cfg *config.Config, db *sqlx.DB, redisClient *redis.Client, kafkaProduc
 		cfg.Auth.AccessTokenDuration,
 		cfg.Auth.RefreshTokenDuration,
 	)
-	_ = service.NewProjectService(projectRepo)
+	projectSvc := service.NewProjectService(projectRepo)
 	_ = service.NewEnvironmentService(envRepo, projectRepo)
 
 	// handlers & middleware
@@ -57,9 +57,10 @@ func New(cfg *config.Config, db *sqlx.DB, redisClient *redis.Client, kafkaProduc
 	healthHandler := handler.NewHealthHandler(db, redisClient)
 	authMiddleware := middleware.NewAuthMiddleware(authSvc)
 	sdkAuthMiddleware := middleware.NewSDKAuthMiddleware(sdkKeyRepo)
+	projectHandler := handler.NewProjectHandler(projectSvc)
 
 	// router
-	router := handler.NewRouter(flagHandler, authHandler, healthHandler, authMiddleware, sdkAuthMiddleware)
+	router := handler.NewRouter(flagHandler, authHandler, healthHandler, authMiddleware, sdkAuthMiddleware, projectHandler)
 
 	//gRPC
 	grpcSrv, _ := grpcserver.NewGRPCServer(flagSvc, authSvc)

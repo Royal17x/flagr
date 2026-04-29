@@ -1,9 +1,10 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"net/http"
 
 	_ "github.com/Royal17x/flagr/backend/docs"
 	"github.com/Royal17x/flagr/backend/internal/middleware"
@@ -12,7 +13,7 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-func NewRouter(flagHandler *FlagHandler, authHandler *AuthHandler, healthHandler *HealthHandler, authMiddleware *middleware.AuthMiddleware, sdkAuthMiddleware *middleware.SDKAuthMiddleware) http.Handler {
+func NewRouter(flagHandler *FlagHandler, authHandler *AuthHandler, healthHandler *HealthHandler, authMiddleware *middleware.AuthMiddleware, sdkAuthMiddleware *middleware.SDKAuthMiddleware, projectHandler *ProjectHandler) http.Handler {
 	r := chi.NewRouter()
 
 	rl := middleware.NewRateLimiter(60, 120)
@@ -49,6 +50,7 @@ func NewRouter(flagHandler *FlagHandler, authHandler *AuthHandler, healthHandler
 		})
 		r.Group(func(r chi.Router) {
 			r.Use(authMiddleware.Authenticate)
+			r.Get("/projects", projectHandler.List)
 			r.Route("/flags", func(r chi.Router) {
 				r.Post("/", flagHandler.Create)
 				r.Get("/", flagHandler.List)
