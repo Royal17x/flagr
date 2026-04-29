@@ -62,7 +62,7 @@ func (f *flagRepository) GetByKey(ctx context.Context, projectID uuid.UUID, key 
 }
 
 func (f *flagRepository) List(ctx context.Context, projectID uuid.UUID) ([]*domain.Flag, error) {
-	var flags []*domain.Flag
+	flags := make([]*domain.Flag, 0)
 	query := `SELECT id, project_id, key, name, description, type, created_at, updated_at
 		FROM flags
 		WHERE project_id = $1;`
