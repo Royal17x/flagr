@@ -13,7 +13,15 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-func NewRouter(flagHandler *FlagHandler, authHandler *AuthHandler, healthHandler *HealthHandler, authMiddleware *middleware.AuthMiddleware, sdkAuthMiddleware *middleware.SDKAuthMiddleware, projectHandler *ProjectHandler) http.Handler {
+func NewRouter(
+	flagHandler *FlagHandler,
+	authHandler *AuthHandler,
+	healthHandler *HealthHandler,
+	authMiddleware *middleware.AuthMiddleware,
+	sdkAuthMiddleware *middleware.SDKAuthMiddleware,
+	projectHandler *ProjectHandler,
+	environmentHandler *EnvironmentHandler,
+	sdkKeyHandler *SDKKeyHandler) http.Handler {
 	r := chi.NewRouter()
 
 	rl := middleware.NewRateLimiter(60, 120)
@@ -36,6 +44,9 @@ func NewRouter(flagHandler *FlagHandler, authHandler *AuthHandler, healthHandler
 	r.Handle("/metrics", promhttp.Handler())
 
 	r.Route("/api/v1", func(r chi.Router) {
+		r.Post("/sdk-keys", sdkKeyHandler.Create)
+		r.Get("/sdk-keys", sdkKeyHandler.List)
+		r.Delete("/sdk-keys/{id}", sdkKeyHandler.Delete)
 		r.Route("/auth", func(r chi.Router) {
 			r.Use(authRL.Middleware)
 			r.Post("/register", authHandler.Register)
@@ -51,12 +62,15 @@ func NewRouter(flagHandler *FlagHandler, authHandler *AuthHandler, healthHandler
 		r.Group(func(r chi.Router) {
 			r.Use(authMiddleware.Authenticate)
 			r.Get("/projects", projectHandler.List)
+			r.Get("/environments", environmentHandler.List)
 			r.Route("/flags", func(r chi.Router) {
 				r.Post("/", flagHandler.Create)
 				r.Get("/", flagHandler.List)
 				r.Get("/{id}", flagHandler.GetByID)
 				r.Put("/{id}", flagHandler.Update)
 				r.Delete("/{id}", flagHandler.Delete)
+				r.Post("/{id}/toggle", flagHandler.Toggle)
+				r.Get("/{id}/environment", flagHandler.GetFlagEnvironment)
 			})
 		})
 	})

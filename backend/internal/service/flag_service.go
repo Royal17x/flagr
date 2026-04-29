@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"strconv"
+	"time"
+
 	"github.com/Royal17x/flagr/backend/internal/metrics"
 	"github.com/Royal17x/flagr/backend/internal/middleware"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"log/slog"
-	"strconv"
-	"time"
 
 	"github.com/Royal17x/flagr/backend/internal/cache"
 	"github.com/Royal17x/flagr/backend/internal/domain"
@@ -171,4 +172,17 @@ func (f *FlagService) EvaluateFlag(ctx context.Context, flagKey string, projectI
 	_ = f.cache.SetEvaluation(ctx, flagKey, projectID, environmentID, fe.Enabled)
 	metrics.FlagEvaluationsTotal.WithLabelValues(flagKey, strconv.FormatBool(enabled), "db").Inc()
 	return fe.Enabled, nil
+}
+
+func (f *FlagService) ToggleFlag(ctx context.Context, flagID uuid.UUID, envID uuid.UUID, enabled bool) error {
+	fe, err := f.flagEnvs.GetByFlagEnvID(ctx, flagID, envID)
+	if err != nil {
+		return fmt.Errorf("FlagService.ToggleFlag: %w", err)
+	}
+	fe.Enabled = enabled
+	return f.flagEnvs.Upsert(ctx, fe)
+}
+
+func (f *FlagService) GetFlagEnvironment(ctx context.Context, flagID uuid.UUID, envID uuid.UUID) (*domain.FlagEnvironment, error) {
+	return f.flagEnvs.GetByFlagEnvID(ctx, flagID, envID)
 }

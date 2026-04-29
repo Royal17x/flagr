@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Flags from './pages/Flags'
+import SDKKeys from './pages/SDKKeys'
 import Protected from './components/Protected'
 import './index.css'
 
@@ -23,6 +24,9 @@ createRoot(document.getElementById('root')!).render(
           } />
           <Route path="/flags" element={
             <Protected><Flags /></Protected>
+          } />
+          <Route path="/sdk-keys" element={
+            <Protected><SDKKeys /></Protected>
           } />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>

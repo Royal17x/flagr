@@ -640,6 +640,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/flags/{id}/toggle": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "flags"
+                ],
+                "summary": "Toggle flag in environment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Flag UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Toggle data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.toggleFlagRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/health/live": {
             "get": {
                 "description": "Returns 200 if service is running",
@@ -765,6 +811,17 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "example": "securepassword"
+                }
+            }
+        },
+        "handler.toggleFlagRequest": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "environment_id": {
+                    "type": "string"
                 }
             }
         },

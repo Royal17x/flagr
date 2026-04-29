@@ -14,6 +14,8 @@ type FlagServiceInterface interface {
 	UpdateFlag(ctx context.Context, flag *domain.Flag) error
 	DeleteFlag(ctx context.Context, id uuid.UUID) error
 	EvaluateFlag(ctx context.Context, flagKey string, projectID uuid.UUID, environmentID uuid.UUID) (bool, error)
+	ToggleFlag(ctx context.Context, flagID uuid.UUID, envID uuid.UUID, enabled bool) error
+	GetFlagEnvironment(ctx context.Context, flagID uuid.UUID, envID uuid.UUID) (*domain.FlagEnvironment, error)
 }
 
 type AuthServiceInterface interface {

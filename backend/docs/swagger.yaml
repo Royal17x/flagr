@@ -49,6 +49,13 @@ definitions:
         example: securepassword
         type: string
     type: object
+  handler.toggleFlagRequest:
+    properties:
+      enabled:
+        type: boolean
+      environment_id:
+        type: string
+    type: object
   handler.updateFlagRequest:
     properties:
       description:
@@ -428,6 +435,35 @@ paths:
       security:
       - BearerAuth: []
       summary: Update flag
+      tags:
+      - flags
+  /flags/{id}/toggle:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Flag UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Toggle data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.toggleFlagRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Toggle flag in environment
       tags:
       - flags
   /flags/evaluate:

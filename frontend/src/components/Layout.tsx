@@ -1,5 +1,5 @@
 import { useNavigate, NavLink } from 'react-router-dom'
-import { Flag, LayoutDashboard, LogOut, Shield } from 'lucide-react'
+import { Flag, LayoutDashboard, LogOut, Shield, Key, BarChart2, Search, Database } from 'lucide-react'
 import { authApi } from '../api/auth'
 import { authStore } from '../store/auth'
 
@@ -62,6 +62,14 @@ export default function Layout({ children }: LayoutProps) {
             <Flag size={17} className="transition-transform group-hover:scale-110" />
             Flags
           </NavLink>
+
+          <NavLink 
+            to="/sdk-keys" 
+            className={({ isActive }) => (isActive ? navActive : navBase)}
+          >
+            <Key size={17} className="transition-transform group-hover:scale-110" />
+            SDK Keys
+          </NavLink>
         </nav>
 
         <div className="p-4 mt-auto">
@@ -73,6 +81,26 @@ export default function Layout({ children }: LayoutProps) {
               </p>
             </div>
           )}
+          <div className="px-3 pt-3 mb-2 border-t border-white/[0.06]">
+            <p className="text-[10px] text-slate-600 uppercase tracking-wider font-semibold mb-2 px-1">
+              Observability
+            </p>
+            <a href="http://localhost:3000" target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-slate-500 hover:text-slate-300 hover:bg-white/[0.03] transition-all">
+              <BarChart2 size={15} />
+              Grafana
+            </a>
+            <a href="http://localhost:16686" target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-slate-500 hover:text-slate-300 hover:bg-white/[0.03] transition-all">
+              <Search size={15} />
+              Jaeger
+            </a>
+          </div>
+          <a href="http://localhost:8090" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-slate-500 hover:text-slate-300 hover:bg-white/3 transition-all">
+            <Database size={15} />
+            Kafka UI
+          </a>
           <button
             onClick={handleLogout}
             className="group flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"

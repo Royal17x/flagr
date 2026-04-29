@@ -37,4 +37,12 @@ export const flagsApi = {
 
   remove: (id: string) =>
     client.delete(`/flags/${id}`),
+
+  toggle: (flagId: string, environmentId: string, enabled: boolean) =>
+    client.post(`/flags/${flagId}/toggle`, { environment_id: environmentId, enabled }),
+
+  getEnvironment: (flagId: string, environmentId: string) =>
+    client.get<{ enabled: boolean }>(`/flags/${flagId}/environment`, {
+        params: { environment_id: environmentId }
+    }),
 }
