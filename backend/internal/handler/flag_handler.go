@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/Royal17x/flagr/backend/internal/validator"
@@ -61,7 +62,8 @@ func (h *FlagHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	flagID, err := h.flagService.CreateFlag(r.Context(), &newFlag)
 	if err != nil {
-		domainErrorToHTTP(w, err)
+		slog.Error("flag create failed", "error", err)
+		respondError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 	newFlag.ID = flagID
@@ -247,4 +249,62 @@ func (h *FlagHandler) Evaluate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, map[string]any{"enabled": enabled})
+}
+
+// ToggleEnvironment godoc
+// @Summary      Toggle flag in environment
+// @Tags         flags
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string  true  "Flag UUID"
+// @Param        request body toggleFlagRequest true "Toggle data"
+// @Success      200  {object}  map[string]any
+// @Security BearerAuth
+// @Router       /flags/{id}/toggle [post]
+func (h *FlagHandler) Toggle(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	flagID, err := uuid.Parse(id)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "invalid uuid")
+		return
+	}
+
+	var req toggleFlagRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	envID, err := uuid.Parse(req.EnvironmentID)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "invalid environment_id")
+		return
+	}
+
+	err = h.flagService.ToggleFlag(r.Context(), flagID, envID, req.Enabled)
+	if err != nil {
+		domainErrorToHTTP(w, err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]any{"enabled": req.Enabled})
+}
+
+func (h *FlagHandler) GetFlagEnvironment(w http.ResponseWriter, r *http.Request) {
+	flagID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "invalid uuid")
+		return
+	}
+	envID, err := uuid.Parse(r.URL.Query().Get("environment_id"))
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "invalid environment_id")
+		return
+	}
+	fe, err := h.flagService.GetFlagEnvironment(r.Context(), flagID, envID)
+	if err != nil {
+		domainErrorToHTTP(w, err)
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]any{"enabled": fe.Enabled})
 }

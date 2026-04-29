@@ -33,3 +33,8 @@ type refreshRequest struct {
 type logoutRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }
+
+type toggleFlagRequest struct {
+	EnvironmentID string `json:"environment_id"`
+	Enabled       bool   `json:"enabled"`
+}

@@ -1,9 +1,10 @@
 package app
 
 import (
+	"net/http"
+
 	"github.com/Royal17x/flagr/backend/pkg/kafka"
 	"google.golang.org/grpc"
-	"net/http"
 
 	"github.com/Royal17x/flagr/backend/internal/cache"
 	"github.com/Royal17x/flagr/backend/internal/config"
@@ -49,7 +50,7 @@ func New(cfg *config.Config, db *sqlx.DB, redisClient *redis.Client, kafkaProduc
 		cfg.Auth.RefreshTokenDuration,
 	)
 	projectSvc := service.NewProjectService(projectRepo)
-	_ = service.NewEnvironmentService(envRepo, projectRepo)
+	envSvc := service.NewEnvironmentService(envRepo, projectRepo)
 
 	// handlers & middleware
 	flagHandler := handler.NewFlagHandler(flagSvc)
@@ -58,9 +59,18 @@ func New(cfg *config.Config, db *sqlx.DB, redisClient *redis.Client, kafkaProduc
 	authMiddleware := middleware.NewAuthMiddleware(authSvc)
 	sdkAuthMiddleware := middleware.NewSDKAuthMiddleware(sdkKeyRepo)
 	projectHandler := handler.NewProjectHandler(projectSvc)
+	envHandler := handler.NewEnvironmentHandler(envSvc)
+	sdkKeyHandler := handler.NewSDKKeyHandler(sdkKeyRepo)
 
 	// router
-	router := handler.NewRouter(flagHandler, authHandler, healthHandler, authMiddleware, sdkAuthMiddleware, projectHandler)
+	router := handler.NewRouter(flagHandler,
+		authHandler,
+		healthHandler,
+		authMiddleware,
+		sdkAuthMiddleware,
+		projectHandler,
+		envHandler,
+		sdkKeyHandler)
 
 	//gRPC
 	grpcSrv, _ := grpcserver.NewGRPCServer(flagSvc, authSvc)
