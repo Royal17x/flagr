@@ -11,6 +11,12 @@
 
 Flagr lets you control feature rollouts without redeploying. Enable or disable features for specific environments instantly through a dashboard or SDK.
 
+## Demo
+
+![Flagr Demo](demo.gif)
+
+> Register → create flags → toggle environments → SDK keys → Grafana metrics
+
 **Use cases:**
 - A/B testing new features
 - Gradual rollouts (10% → 50% → 100%)
